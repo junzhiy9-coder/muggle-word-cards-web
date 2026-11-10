@@ -1,0 +1,2887 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Muggle Word Cards 试用版</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet" />
+    <style>
+      /* ===== Palette & base — copied from the main Muggle Word Cards (theme.css) ===== */
+      :root {
+        color-scheme: light dark;
+        --bg: #f4f2ec;
+        --surface: #ffffff;
+        --surface-2: #efece3;
+        --text: #23201a;
+        --ink: #23201a;
+        --ink-soft: #5d574c;
+        --dim: #5d574c;
+        --ink-faint: #8a8375;
+        --border: #ddd6c6;
+        --line: #ddd6c6;
+        --accent: #b3382c;
+        --accent-ink: #ffffff;
+        --good: #2e7d4f;
+        --good-bg: #e5f1e9;
+        --bad: #b3382c;
+        --bad-bg: #f8e8e5;
+        --gold: #9a6b1f;
+        --gold-bg: #f6ecd4;
+        --shadow: 0 10px 30px rgba(35, 32, 26, 0.10), 0 2px 6px rgba(35, 32, 26, 0.06);
+        --radius: 18px;
+        --glass-hi: rgba(255, 255, 255, 0.85);
+        --glass-shadow: rgba(35, 32, 26, 0.20);
+        --glass-shadow-soft: rgba(35, 32, 26, 0.10);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #17150f;
+          --surface: #242119;
+          --surface-2: #2c291f;
+          --text: #ece7da;
+          --ink: #ece7da;
+          --ink-soft: #b3ac9c;
+          --dim: #b3ac9c;
+          --ink-faint: #857e6e;
+          --border: #3a362a;
+          --line: #3a362a;
+          --accent: #e0685a;
+          --accent-ink: #1c1712;
+          --good: #7cc79b;
+          --good-bg: #1e3226;
+          --bad: #e0685a;
+          --bad-bg: #3a211d;
+          --gold: #d9ab4e;
+          --gold-bg: #38300f;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+          --glass-hi: rgba(255, 255, 255, 0.30);
+          --glass-shadow: rgba(0, 0, 0, 0.55);
+          --glass-shadow-soft: rgba(0, 0, 0, 0.35);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body { margin: 0; background: var(--bg); color: var(--ink); }
+      button { font: inherit; }
+
+      /* ===== App styles — ported verbatim from the main version ===== */
+      .mwc-wrap {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 20px 16px 48px;
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.5;
+      }
+      .mwc-wrap header.top { margin-bottom: 14px; }
+      .mwc-wrap header.top h1 {
+        font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+        font-size: 26px;
+        font-weight: 900;
+        margin: 0 0 4px;
+        letter-spacing: 0.02em;
+      }
+      .mwc-wrap header.top p { margin: 0; color: var(--ink-soft); font-size: 13.5px; }
+
+      .progress-block {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 14px 16px;
+        margin-bottom: 12px;
+      }
+      .progress-nums {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+        font-size: 14px;
+        color: var(--ink-soft);
+        margin-bottom: 10px;
+      }
+      .progress-nums b { color: var(--ink); font-size: 16px; }
+      .progress-nums .know b { color: var(--good); }
+      .progress-nums .unknow b { color: var(--bad); }
+      .progress-nums .due b { color: var(--accent); }
+      .bar {
+        height: 8px;
+        border-radius: 99px;
+        background: var(--surface-2);
+        overflow: hidden;
+        display: flex;
+      }
+      .bar .seg-know { background: var(--good); height: 100%; transition: width .35s ease; }
+      .bar .seg-unknow { background: var(--bad); height: 100%; transition: width .35s ease; }
+
+      .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+      .mode-switch button {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        font: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        padding: 11px 10px;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+      .mode-switch button.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+      .src-select { position: relative; margin-bottom: 14px; }
+      .src-trigger {
+        appearance: none;
+        font: inherit;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 11px 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface);
+        color: var(--ink);
+        font-size: 15px;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+        transition: transform .15s ease;
+      }
+      .src-trigger:active { transform: scale(.99); }
+      .src-trigger-cnt { color: var(--ink-soft); font-weight: 500; }
+      .src-trigger .chev {
+        margin-left: auto;
+        flex: none;
+        color: var(--ink-soft);
+        transition: transform .2s ease;
+      }
+      .src-trigger .chev.open { transform: rotate(180deg); }
+      .src-menu {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(100% + 6px);
+        z-index: 40;
+        padding: 6px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: 0 14px 34px rgba(0, 0, 0, .16);
+        max-height: 46vh;
+        overflow-y: auto;
+        animation: src-menu-in .16s ease;
+      }
+      @keyframes src-menu-in {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .src-opt {
+        appearance: none;
+        font: inherit;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border: none;
+        border-radius: 9px;
+        background: transparent;
+        color: var(--ink);
+        font-size: 14.5px;
+        text-align: left;
+        cursor: pointer;
+      }
+      .src-opt .cnt { margin-left: auto; font-size: 12.5px; color: var(--ink-soft); }
+      .src-opt:active { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+      .src-opt.selected {
+        background: var(--accent);
+        box-shadow:
+          0 4px 10px color-mix(in srgb, var(--accent) 24%, transparent),
+          inset 0 1px 0 rgba(255, 255, 255, .28),
+          inset 0 -2px 0 rgba(0, 0, 0, .14);
+        color: var(--accent-ink);
+        font-weight: 600;
+      }
+      .src-opt.selected .cnt { color: inherit; opacity: .75; }
+      @media (prefers-reduced-motion: reduce) {
+        .src-menu { animation: none; }
+        .src-trigger .chev { transition: none; }
+      }
+
+      .collections {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      @media (min-width: 560px) {
+        .collections { grid-template-columns: repeat(4, 1fr); }
+      }
+      .col-tile {
+        appearance: none;
+        font: inherit;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface);
+        color: var(--ink);
+        cursor: pointer;
+        transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+      }
+      .col-tile:active { transform: scale(.98); }
+      .col-tile .col-name { font-size: 16.5px; font-weight: 700; letter-spacing: .01em; }
+      .col-tile .col-meta { font-size: 12.5px; color: var(--ink-soft); }
+      .col-tile.active {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: var(--bg);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, .16);
+      }
+      .col-tile.active .col-meta { color: inherit; opacity: .72; }
+      .col-caption {
+        margin: 0 2px 10px;
+        font-size: 13px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+      }
+
+      .screen-banner {
+        border: 1px dashed var(--accent);
+        background: var(--bad-bg);
+        color: var(--ink);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        margin-bottom: 14px;
+        font-size: 14.5px;
+      }
+      .screen-banner .sb-title { font-weight: 700; margin-bottom: 4px; }
+      .screen-banner .sb-sub { color: var(--ink-soft); font-size: 13.5px; margin-bottom: 10px; }
+      .screen-banner .sb-btn {
+        appearance: none;
+        border: 1px solid color-mix(in srgb, var(--accent) 78%, rgba(0, 0, 0, .22));
+        background: var(--accent);
+        box-shadow:
+          0 7px 16px color-mix(in srgb, var(--accent) 26%, transparent),
+          inset 0 1px 0 rgba(255, 255, 255, .28),
+          inset 0 -2px 0 rgba(0, 0, 0, .14);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, .14);
+        color: var(--accent-ink);
+        font: inherit;
+        font-size: 14.5px;
+        font-weight: 600;
+        padding: 10px 20px;
+        border-radius: 11px;
+        cursor: pointer;
+      }
+      .screen-banner .sb-btn.ghost {
+        background: transparent;
+        color: var(--ink-soft);
+        border: 1px solid var(--line);
+        margin-left: 8px;
+        box-shadow: none;
+        text-shadow: none;
+      }
+      .pass-dots { display: inline-flex; gap: 6px; margin-left: 8px; vertical-align: middle; }
+      .pass-dots i {
+        width: 9px; height: 9px; border-radius: 50%;
+        background: var(--surface-2); border: 1px solid var(--line); display: inline-block;
+      }
+      .pass-dots i.cur { background: var(--accent); border-color: var(--accent); }
+      .pass-dots i.done { background: var(--good); border-color: var(--good); }
+
+      .screen-done {
+        border: 1px solid var(--line);
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 16px;
+        margin-bottom: 14px;
+        font-size: 14.5px;
+      }
+      .screen-done .sd-title { font-weight: 700; margin-bottom: 6px; }
+      .screen-done .sd-line { color: var(--ink-soft); font-size: 13.5px; }
+      .screen-done .sd-line b { color: var(--ink); }
+
+      /* flashcard */
+      .card-scene { perspective: 1400px; margin-bottom: 12px; position: relative; }
+      .shuffle-stage { position: absolute; inset: 0; z-index: 6; }
+      .mini-card {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 108px;
+        height: 152px;
+        border-radius: 10px;
+        background:
+          repeating-linear-gradient(45deg, rgba(255, 255, 255, .22) 0 5px, transparent 5px 11px),
+          repeating-linear-gradient(-45deg, rgba(255, 255, 255, .22) 0 5px, transparent 5px 11px),
+          var(--accent);
+        box-shadow: inset 0 0 0 5px #fbf9f3, inset 0 0 0 7px rgba(0, 0, 0, .18), 0 6px 16px rgba(0, 0, 0, .28);
+        will-change: transform;
+      }
+      .card {
+        position: relative;
+        width: 100%;
+        height: 300px;
+        transform-style: preserve-3d;
+        transition: transform .55s cubic-bezier(.2,.7,.3,1);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .card.flipped { transform: rotateY(180deg); }
+      .card-face {
+        position: absolute;
+        inset: 0;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 22px;
+        text-align: center;
+        overflow: hidden;
+      }
+      .card-face.back {
+        transform: rotateY(180deg);
+        justify-content: flex-start;
+        padding-top: 26px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .card-face.back::-webkit-scrollbar { width: 0; height: 0; display: none; }
+      .card-scroll-track {
+        position: absolute;
+        top: 20%;
+        right: 7px;
+        width: 5px;
+        height: 60%;
+        transform: rotateY(180deg);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        pointer-events: none;
+        z-index: 3;
+      }
+      .card-scroll-thumb {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        background: var(--ink-faint);
+        border-radius: 99px;
+      }
+      .card-tag { position: absolute; top: 14px; left: 16px; font-size: 12px; color: var(--ink-faint); letter-spacing: .06em; }
+      .card-status {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 99px;
+        display: none;
+      }
+      .card-status.know { display: inline-block; background: var(--good-bg); color: var(--good); }
+      .card-status.unknow { display: inline-block; background: var(--bad-bg); color: var(--bad); }
+      .card-status.due { display: inline-block; background: var(--gold-bg); color: var(--gold); }
+      .word {
+        font-family: Georgia, "Times New Roman", "Songti SC", serif;
+        font-size: clamp(34px, 9vw, 46px);
+        font-weight: 700;
+        line-height: 1.15;
+        word-break: break-word;
+      }
+      .word.small { font-size: clamp(24px, 6.5vw, 34px); }
+      .phonetic {
+        margin-top: 10px;
+        font-family: "Lucida Sans Unicode", "Segoe UI", "Noto Sans", sans-serif;
+        font-size: clamp(16px, 4.4vw, 20px);
+        letter-spacing: .02em;
+        color: var(--ink-soft);
+      }
+      .back-phonetic {
+        font-family: "Lucida Sans Unicode", "Segoe UI", "Noto Sans", sans-serif;
+        font-size: 15px;
+        letter-spacing: .02em;
+        color: var(--ink-faint);
+        margin-bottom: 10px;
+      }
+      .fan-phon {
+        display: block;
+        margin-top: 7px;
+        font-family: "Lucida Sans Unicode", "Segoe UI", "Noto Sans", sans-serif;
+        font-size: 10.5px;
+        font-weight: 400;
+        line-height: 1.35;
+        color: var(--ink-soft);
+      }
+      .w-phon {
+        margin-left: 9px;
+        font-family: "Lucida Sans Unicode", "Segoe UI", "Noto Sans", sans-serif;
+        font-size: 13.5px;
+        color: var(--ink-faint);
+      }
+      .opt-phon {
+        margin-left: 10px;
+        font-family: "Lucida Sans Unicode", "Segoe UI", "Noto Sans", sans-serif;
+        font-size: 13px;
+        color: var(--ink-faint);
+      }
+      .tap-hint { margin-top: 16px; font-size: 13px; color: var(--ink-faint); }
+      .due-hint { margin-top: 8px; font-size: 12.5px; color: var(--gold); font-weight: 600; }
+      .back-word { font-family: Georgia, "Times New Roman", serif; font-size: 21px; font-weight: 700; margin-bottom: 6px; }
+      .meaning { font-size: 20px; font-weight: 600; margin-bottom: 14px; }
+      .meaning-block { margin-top: 16px; max-width: 92%; }
+      .meaning-block .meaning { margin-bottom: 0; }
+      .meaning-hidden {
+        font-size: 13.5px;
+        color: var(--ink-faint);
+        border: 1px dashed var(--line);
+        border-radius: 10px;
+        padding: 9px 16px;
+      }
+      .phrase-label { font-size: 11.5px; letter-spacing: .12em; color: var(--ink-faint); margin-bottom: 3px; }
+      .phrase {
+        font-family: Georgia, "Times New Roman", serif;
+        font-style: italic;
+        font-size: 15.5px;
+        color: var(--ink-soft);
+        margin-bottom: 14px;
+        max-width: 92%;
+      }
+      .hook {
+        font-size: 14.5px;
+        color: var(--gold);
+        background: var(--gold-bg);
+        border-radius: 10px;
+        padding: 8px 14px;
+        max-width: 92%;
+      }
+      .card-flag {
+        display: none;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--bad);
+        background: var(--bad-bg);
+        border-radius: 99px;
+        padding: 3px 12px;
+        margin-bottom: 12px;
+      }
+      .card-flag.show { display: inline-block; }
+
+      .nav-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+      .nav-btn {
+        appearance: none;
+        font: inherit;
+        font-size: 15px;
+        padding: 10px 18px;
+        border-radius: 99px;
+        cursor: pointer;
+        min-width: 92px;
+        color: var(--ink);
+        -webkit-tap-highlight-color: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.03) 60%);
+        backdrop-filter: blur(14px) saturate(1.6);
+        -webkit-backdrop-filter: blur(14px) saturate(1.6);
+        box-shadow:
+          0 8px 20px var(--glass-shadow-soft),
+          0 2px 6px var(--glass-shadow-soft),
+          inset 0 1px 0 var(--glass-hi),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+        transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
+      }
+      .nav-btn:disabled { opacity: .4; cursor: default; }
+      @media (hover: hover) {
+        .nav-btn:not(:disabled):hover {
+          transform: translateY(-1px);
+          box-shadow:
+            0 14px 28px var(--glass-shadow-soft),
+            0 5px 10px var(--glass-shadow-soft),
+            inset 0 1px 0 var(--glass-hi),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.07);
+        }
+      }
+      .nav-btn:not(:disabled):active {
+        transform: translateY(1px) scale(.98);
+        box-shadow:
+          0 3px 8px var(--glass-shadow-soft),
+          inset 0 1px 0 var(--glass-hi),
+          inset 0 2px 5px rgba(0, 0, 0, 0.10);
+      }
+      .pos { font-size: 14px; color: var(--ink-soft); white-space: nowrap; }
+      .mark-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+      .mark-btn {
+        appearance: none;
+        font: inherit;
+        font-size: 16px;
+        font-weight: 600;
+        padding: 13px 10px;
+        border-radius: 14px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(12px) saturate(1.5);
+        -webkit-backdrop-filter: blur(12px) saturate(1.5);
+        box-shadow:
+          0 14px 28px var(--glass-shadow),
+          0 4px 8px var(--glass-shadow-soft),
+          inset 0 1px 0 var(--glass-hi),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.08),
+          inset 0 0 18px rgba(255, 255, 255, 0.10);
+        transition: transform .16s ease, box-shadow .16s ease;
+      }
+      .mark-btn::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(118deg,
+          rgba(255, 255, 255, 0.55) 0%,
+          rgba(255, 255, 255, 0.14) 38%,
+          rgba(255, 255, 255, 0) 58%);
+        pointer-events: none;
+      }
+      .mark-btn.know {
+        background: linear-gradient(165deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.06) 60%),
+          color-mix(in srgb, var(--good-bg) 68%, transparent);
+        color: var(--good);
+        border-color: color-mix(in srgb, var(--good) 42%, rgba(255, 255, 255, 0.55));
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+      }
+      .mark-btn.unknow {
+        background: linear-gradient(165deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.06) 60%),
+          color-mix(in srgb, var(--bad-bg) 68%, transparent);
+        color: var(--bad);
+        border-color: color-mix(in srgb, var(--bad) 42%, rgba(255, 255, 255, 0.55));
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+      }
+      @media (hover: hover) {
+        .mark-btn:hover {
+          transform: translateY(-2px);
+          box-shadow:
+            0 20px 36px var(--glass-shadow),
+            0 6px 12px var(--glass-shadow-soft),
+            inset 0 1px 0 var(--glass-hi),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.08),
+            inset 0 0 18px rgba(255, 255, 255, 0.14);
+        }
+      }
+      .mark-btn:active {
+        transform: translateY(2px) scale(.99);
+        box-shadow:
+          0 4px 10px var(--glass-shadow-soft),
+          0 1px 3px var(--glass-shadow-soft),
+          inset 0 1px 0 var(--glass-hi),
+          inset 0 2px 6px rgba(0, 0, 0, 0.10);
+      }
+      .tool-row { display: flex; gap: 8px; flex-wrap: wrap; }
+      .tool-btn {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--ink-soft);
+        font: inherit;
+        font-size: 13.5px;
+        padding: 8px 14px;
+        border-radius: 99px;
+        cursor: pointer;
+      }
+      .tool-btn.on { background: var(--surface-2); color: var(--ink); font-weight: 600; }
+      .tool-btn:disabled { opacity: .45; cursor: default; }
+      .tool-btn.danger {
+        color: var(--bad);
+        border-color: color-mix(in srgb, var(--bad) 45%, var(--line));
+        font-weight: 600;
+      }
+
+      .clear-confirm {
+        border: 2px solid var(--bad);
+        background: var(--bad-bg);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 10px 24px color-mix(in srgb, var(--bad) 18%, transparent);
+      }
+      .clear-confirm-title {
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1.3;
+        color: var(--bad);
+        margin-bottom: 8px;
+      }
+      .clear-confirm-text {
+        margin: 0 0 14px;
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--ink);
+      }
+      .clear-confirm-text b { color: var(--bad); font-size: 17px; }
+      .clear-confirm-actions { display: grid; grid-template-columns: 1fr 1.25fr; gap: 10px; }
+      .clear-cancel-btn {
+        appearance: none;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        padding: 12px 10px;
+        border-radius: 12px;
+        cursor: pointer;
+        background: var(--surface);
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+      .clear-danger-btn {
+        appearance: none;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 700;
+        padding: 12px 10px;
+        border-radius: 12px;
+        cursor: pointer;
+        color: var(--accent-ink);
+        background: var(--bad);
+        border: 1px solid color-mix(in srgb, var(--bad) 78%, rgba(0, 0, 0, .22));
+        box-shadow:
+          0 8px 18px color-mix(in srgb, var(--bad) 26%, transparent),
+          inset 0 1px 0 rgba(255, 255, 255, .28),
+          inset 0 -2px 0 rgba(0, 0, 0, .14);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, .14);
+      }
+      .clear-danger-btn:active {
+        transform: translateY(1px) scale(.99);
+        box-shadow:
+          0 2px 6px color-mix(in srgb, var(--bad) 18%, transparent),
+          inset 0 1px 0 rgba(255, 255, 255, .18),
+          inset 0 2px 4px rgba(0, 0, 0, .18);
+      }
+      .clear-cancel-btn:active { transform: translateY(1px); }
+
+      .restore-row {
+        margin-top: 12px;
+        border: 1px dashed color-mix(in srgb, var(--good) 45%, var(--line));
+        border-radius: 14px;
+        padding: 12px 14px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 12px;
+      }
+      .restore-text {
+        margin: 0;
+        flex: 1 1 220px;
+        font-size: 13.5px;
+        line-height: 1.55;
+        color: var(--ink-soft);
+      }
+      .tool-btn.restore {
+        color: var(--good);
+        border-color: color-mix(in srgb, var(--good) 50%, var(--line));
+        font-weight: 700;
+      }
+      .restore-note {
+        margin: 0;
+        flex: 1 1 100%;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--good);
+      }
+      .empty-note {
+        text-align: center;
+        color: var(--ink-soft);
+        padding: 48px 16px;
+        background: var(--surface);
+        border: 1px dashed var(--line);
+        border-radius: var(--radius);
+        font-size: 15px;
+      }
+
+      /* quiz */
+      .quiz-box {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 26px 20px 20px;
+      }
+      .quiz-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: 13.5px;
+        color: var(--ink-soft);
+        margin-bottom: 14px;
+      }
+      .quiz-head .score b { color: var(--ink); font-size: 16px; }
+      .quiz-meaning { font-size: 24px; font-weight: 700; text-align: center; margin: 6px 0 4px; }
+      .quiz-phrase {
+        text-align: center;
+        font-family: Georgia, "Times New Roman", serif;
+        font-style: italic;
+        font-size: 14.5px;
+        color: var(--ink-faint);
+        margin-bottom: 20px;
+        min-height: 21px;
+      }
+      .options { display: grid; gap: 10px; }
+      .opt {
+        appearance: none;
+        width: 100%;
+        text-align: left;
+        font: inherit;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 17.5px;
+        padding: 13px 16px;
+        border-radius: 12px;
+        border: 1.5px solid var(--line);
+        background: var(--surface);
+        color: var(--ink);
+        cursor: pointer;
+        word-break: break-word;
+      }
+      .opt:disabled { cursor: default; }
+      .opt.right { border-color: var(--good); background: var(--good-bg); color: var(--good); font-weight: 700; }
+      .opt.wrong { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
+      .quiz-feedback { margin-top: 16px; font-size: 14.5px; min-height: 22px; text-align: center; }
+      .quiz-feedback.good { color: var(--good); font-weight: 600; }
+      .quiz-feedback.bad { color: var(--bad); }
+      .quiz-next {
+        display: none;
+        width: 100%;
+        margin-top: 12px;
+        appearance: none;
+        border: none;
+        background: var(--ink);
+        color: var(--bg);
+        font: inherit;
+        font-size: 15.5px;
+        font-weight: 600;
+        padding: 13px;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+      .quiz-next.show { display: block; }
+      .quiz-done { text-align: center; padding: 14px 0 6px; }
+      .quiz-done .big { font-size: 30px; font-weight: 700; margin-bottom: 6px; }
+      .quiz-done p { color: var(--ink-soft); margin: 0 0 16px; font-size: 14.5px; }
+      .restart-btn {
+        appearance: none;
+        border: 1px solid color-mix(in srgb, var(--accent) 78%, rgba(0, 0, 0, .22));
+        background: var(--accent);
+        box-shadow:
+          0 9px 20px color-mix(in srgb, var(--accent) 26%, transparent),
+          inset 0 1px 0 rgba(255, 255, 255, .28),
+          inset 0 -2px 0 rgba(0, 0, 0, .14);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, .14);
+        color: var(--accent-ink);
+        font: inherit;
+        font-size: 15.5px;
+        font-weight: 600;
+        padding: 12px 28px;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+
+      /* home / entry page */
+      .fan-zone { position: relative; height: 196px; margin: 10px 0 2px; overflow: hidden; }
+      .fan-shadow {
+        position: absolute;
+        left: 50%;
+        bottom: 2px;
+        width: 300px;
+        height: 26px;
+        margin-left: -150px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center, rgba(35, 32, 26, 0.20), rgba(35, 32, 26, 0) 68%);
+        filter: blur(2px);
+      }
+      .fan-card {
+        position: absolute;
+        left: 50%;
+        bottom: 12px;
+        width: 96px;
+        height: 136px;
+        margin-left: -48px;
+        border-radius: 10px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 18px 8px 8px;
+        text-align: center;
+        transform-origin: 50% 112%;
+        transform: rotate(var(--r, 0deg)) translateY(var(--ty, 0px));
+        color: var(--ink);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 15px;
+        font-weight: 700;
+        word-break: break-word;
+        animation: fan-in .7s cubic-bezier(.2,.7,.3,1) backwards;
+      }
+      .fan-card.mid { z-index: 2; }
+      .fan-card.back-pattern {
+        background:
+          repeating-linear-gradient(45deg, rgba(255, 255, 255, .22) 0 5px, transparent 5px 11px),
+          repeating-linear-gradient(-45deg, rgba(255, 255, 255, .22) 0 5px, transparent 5px 11px),
+          var(--accent);
+        box-shadow: inset 0 0 0 5px #fbf9f3, inset 0 0 0 7px rgba(0, 0, 0, .18), var(--shadow);
+      }
+      .fan-card.center { border-color: var(--accent); color: var(--ink); z-index: 3; }
+      @keyframes fan-in {
+        from { transform: rotate(0deg) translateY(16px); opacity: 0; }
+        to { transform: rotate(var(--r, 0deg)) translateY(var(--ty, 0px)); opacity: 1; }
+      }
+      button.fan-zone {
+        display: block;
+        width: 100%;
+        background: none;
+        border: 0;
+        padding: 0;
+        color: var(--ink);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: pan-y;
+        transition: transform .32s cubic-bezier(.25,.9,.3,1);
+      }
+      button.fan-zone.dragging { transition: none; }
+      button.fan-zone:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 12px; }
+      .fan-card.swap {
+        transition:
+          transform .54s cubic-bezier(.28,.84,.3,1),
+          border-color .3s ease,
+          color .3s ease,
+          opacity .3s ease;
+      }
+      .fan-card.offfan { opacity: 0; pointer-events: none; }
+      .brand { text-align: center; margin: 14px 0 22px; }
+      .brand h1 {
+        font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+        font-size: 36px;
+        font-weight: 900;
+        line-height: 1.15;
+        margin: 0 0 6px;
+        letter-spacing: .01em;
+      }
+      .brand p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+      .brand-rule {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 14px;
+      }
+      .brand-rule::before,
+      .brand-rule::after {
+        content: "";
+        height: 1px;
+        width: 56px;
+        background: linear-gradient(90deg, transparent, var(--line));
+      }
+      .brand-rule::after {
+        background: linear-gradient(90deg, var(--line), transparent);
+      }
+      .brand-rule span {
+        width: 6px;
+        height: 6px;
+        margin: 0 10px;
+        background: var(--accent);
+        transform: rotate(45deg);
+      }
+
+      /* Brand splash — same as the main version */
+      .splash {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 24px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+        background:
+          radial-gradient(120% 90% at 50% 38%, rgba(255, 214, 170, .10), rgba(70, 16, 8, .26) 80%),
+          #b3382c;
+        border: 0;
+        font: inherit;
+        color: #f4f2ec;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        opacity: 1;
+        transition: opacity .45s ease;
+      }
+      .splash-map { position: absolute; inset: 0; display: block; pointer-events: none; }
+      .splash-map svg { display: block; width: 100%; height: 100%; }
+      .splash-map .draw {
+        fill: none;
+        stroke: #f4f2ec;
+        stroke-width: 1.6;
+        stroke-linecap: round;
+        stroke-dasharray: 100;
+        stroke-dashoffset: 100;
+        animation: splash-draw 1.4s cubic-bezier(.4, 0, .3, 1) forwards;
+      }
+      .splash-map .draw.frame { stroke-width: 1.4; opacity: .5; }
+      .splash-map .draw.frame-inner { stroke-width: 1; opacity: .3; animation-delay: .15s; }
+      .splash-map .draw.trail { stroke-width: 2; opacity: .48; animation-duration: 1.7s; animation-delay: .35s; }
+      .splash-map .fade-el { opacity: 0; animation: splash-ink-in .7s ease forwards; }
+      .splash-map .ring {
+        fill: none;
+        stroke: #f4f2ec;
+        stroke-width: 1.4;
+        stroke-dasharray: 4 5;
+        opacity: 0;
+      }
+      .splash-map .compass { fill: rgba(244, 242, 236, .18); stroke: #f4f2ec; stroke-width: 1.4; stroke-linejoin: round; }
+      .splash-map .compass-dot { fill: #f4f2ec; }
+      .splash-map .x-mark { fill: none; stroke: #f4f2ec; stroke-width: 2.4; stroke-linecap: round; }
+      .splash-map .prints ellipse {
+        fill: #f4f2ec;
+        opacity: 0;
+        animation: splash-print-in .5s ease forwards;
+      }
+      @keyframes splash-draw { to { stroke-dashoffset: 0; } }
+      @keyframes splash-ink-in { from { opacity: 0; } to { opacity: .75; } }
+      @keyframes splash-print-in { from { opacity: 0; } to { opacity: .6; } }
+      .splash.leaving { opacity: 0; pointer-events: none; }
+      .splash:focus-visible { outline: 2px solid #f4f2ec; outline-offset: -4px; }
+      .splash .brand-rule::before { background: linear-gradient(90deg, transparent, rgba(244, 242, 236, .75)); }
+      .splash .brand-rule::after { background: linear-gradient(90deg, rgba(244, 242, 236, .75), transparent); }
+      .splash .brand-rule span { background: #f4f2ec; }
+      .splash .splash-hint { color: rgba(244, 242, 236, .72); }
+      .splash-brand { position: relative; z-index: 1; display: block; text-align: center; animation: splash-rise .8s cubic-bezier(.2,.7,.3,1) .45s backwards; }
+      .splash-title {
+        display: block;
+        font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+        font-size: clamp(38px, 10.5vw, 52px);
+        font-weight: 900;
+        line-height: 1.12;
+        letter-spacing: .01em;
+      }
+      .splash-hint {
+        position: absolute;
+        z-index: 1;
+        left: 0;
+        right: 0;
+        bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+        text-align: center;
+        font-size: 12.5px;
+        letter-spacing: .18em;
+        color: var(--ink-faint);
+        animation: splash-rise .8s ease 1s backwards;
+      }
+      @keyframes splash-rise {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .glass-card {
+        background:
+          linear-gradient(160deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, .06) 55%),
+          color-mix(in srgb, var(--surface) 84%, transparent);
+        border: 1px solid rgba(255, 255, 255, .5);
+        border-radius: var(--radius);
+        backdrop-filter: blur(10px) saturate(1.4);
+        -webkit-backdrop-filter: blur(10px) saturate(1.4);
+        box-shadow:
+          0 12px 26px var(--glass-shadow-soft),
+          0 3px 8px var(--glass-shadow-soft),
+          inset 0 1px 0 var(--glass-hi);
+        padding: 16px;
+      }
+      .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+      .stat-card .lbl { font-size: 12.5px; color: var(--ink-faint); letter-spacing: .1em; margin-bottom: 3px; }
+      .stat-card .num { font-size: 30px; font-weight: 700; line-height: 1.15; }
+      .stat-card .num small {
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--ink-soft);
+      }
+      .stat-card .sub { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+      .mini-bar {
+        height: 5px;
+        border-radius: 99px;
+        background: var(--surface-2);
+        overflow: hidden;
+        margin: 7px 0 5px;
+      }
+      .mini-bar span {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+        background: var(--good);
+        transition: width .4s ease;
+      }
+      .home-h { font-size: 15.5px; margin: 0 0 10px; letter-spacing: .02em; }
+      .home-h .dot { color: var(--bad); margin-right: 6px; }
+      .home-h .home-h-en {
+        margin-left: 8px;
+        font-family: "Playfair Display", serif;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: .22em;
+        color: var(--dim);
+        vertical-align: middle;
+      }
+      .wanted-list { display: grid; gap: 10px; margin-bottom: 22px; }
+      .wanted-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+        font: inherit;
+        color: var(--ink);
+        cursor: pointer;
+      }
+      .wanted-item .w-word { font-family: Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 700; color: var(--bad); }
+      .wanted-item .w-mean { font-size: 13.5px; color: var(--ink-soft); }
+      .wanted-item .w-streak {
+        margin-left: auto;
+        flex-shrink: 0;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--bad);
+        background: var(--bad-bg);
+        border-radius: 99px;
+        padding: 3px 10px;
+        white-space: nowrap;
+      }
+      .wanted-item .w-go { font-size: 13px; color: var(--ink-faint); white-space: nowrap; flex-shrink: 0; }
+      @media (hover: hover) {
+        .wanted-item { transition: transform .16s ease, box-shadow .16s ease; }
+        .wanted-item:hover { transform: translateY(-2px); }
+      }
+      .wanted-item:active { transform: translateY(1px); }
+      .wanted-empty {
+        font-size: 13.5px;
+        color: var(--ink-soft);
+        background: var(--surface-2);
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 22px;
+      }
+      .cta-btn {
+        appearance: none;
+        width: 100%;
+        font: inherit;
+        font-size: 17.5px;
+        font-weight: 700;
+        padding: 16px;
+        border-radius: 16px;
+        cursor: pointer;
+        color: var(--accent-ink);
+        background: var(--accent);
+        border: 1px solid color-mix(in srgb, var(--accent) 78%, rgba(0, 0, 0, .22));
+        box-shadow:
+          0 12px 24px color-mix(in srgb, var(--accent) 26%, transparent),
+          0 3px 7px var(--glass-shadow-soft),
+          inset 0 1px 0 rgba(255, 255, 255, .28),
+          inset 0 -2px 0 rgba(0, 0, 0, .14);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, .14);
+        margin-bottom: 12px;
+        transition: transform .16s ease, box-shadow .16s ease;
+      }
+      @media (hover: hover) {
+        .cta-btn:hover {
+          transform: translateY(-1px);
+          box-shadow:
+            0 16px 30px color-mix(in srgb, var(--accent) 30%, transparent),
+            0 5px 10px var(--glass-shadow-soft),
+            inset 0 1px 0 rgba(255, 255, 255, .28),
+            inset 0 -2px 0 rgba(0, 0, 0, .14);
+        }
+      }
+      .cta-btn:active {
+        transform: translateY(2px) scale(.99);
+        box-shadow:
+          0 4px 10px color-mix(in srgb, var(--accent) 20%, transparent),
+          inset 0 1px 0 rgba(255, 255, 255, .18),
+          inset 0 2px 5px rgba(0, 0, 0, .18);
+      }
+      .screen-banner .sb-btn:active,
+      .restart-btn:active {
+        transform: translateY(1px) scale(.99);
+        box-shadow:
+          0 2px 6px color-mix(in srgb, var(--accent) 18%, transparent),
+          inset 0 1px 0 rgba(255, 255, 255, .18),
+          inset 0 2px 4px rgba(0, 0, 0, .18);
+      }
+      .cta-btn.review {
+        color: var(--ink);
+        border-color: color-mix(in srgb, var(--gold) 45%, rgba(255, 255, 255, .55));
+        background:
+          linear-gradient(165deg, rgba(255, 255, 255, .38), rgba(255, 255, 255, .05) 60%),
+          color-mix(in srgb, var(--gold-bg) 82%, transparent);
+        margin-bottom: 18px;
+      }
+      .trial-note {
+        text-align: center;
+        color: var(--ink-faint);
+        font-size: 12.5px;
+        margin-top: 4px;
+      }
+
+      /* exam profile first-visit setup form — copied from the main version */
+      .settings-flow { max-width: 520px; margin: 6px auto 0; }
+      .settings-h {
+        font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+        font-size: 26px;
+        font-weight: 900;
+        margin: 0 0 6px;
+        letter-spacing: .01em;
+      }
+      .settings-sub { color: var(--ink-soft); font-size: 14px; margin: 0 0 16px; }
+      .settings-card { display: grid; gap: 14px; }
+      .field { display: grid; gap: 6px; }
+      .field-lbl { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+      .field-input {
+        appearance: none;
+        font: inherit;
+        font-size: 16px;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 14px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .field-input:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+        border-color: var(--accent);
+      }
+      .preset-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: -4px; }
+      .preset-chip {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--ink-soft);
+        font: inherit;
+        font-size: 13.5px;
+        padding: 6px 13px;
+        border-radius: 99px;
+        cursor: pointer;
+      }
+      .preset-chip.on {
+        background: var(--accent);
+        border-color: color-mix(in srgb, var(--accent) 78%, rgba(0, 0, 0, .22));
+        box-shadow:
+          0 4px 10px color-mix(in srgb, var(--accent) 24%, transparent),
+          inset 0 1px 0 rgba(255, 255, 255, .28),
+          inset 0 -2px 0 rgba(0, 0, 0, .14);
+        color: var(--accent-ink);
+        font-weight: 600;
+      }
+      .form-error {
+        font-size: 14px;
+        color: var(--bad);
+        background: var(--bad-bg);
+        border-radius: 10px;
+        padding: 10px 14px;
+      }
+      .settings-save { margin-bottom: 2px; }
+      .settings-save:disabled { opacity: .55; cursor: default; }
+
+      /* photo extract — talks to the trial backend, styled like the rest of the app */
+      .cta-btn.photo {
+        color: var(--ink);
+        background: var(--surface);
+        border-color: var(--line);
+        box-shadow: var(--shadow);
+        text-shadow: none;
+        margin-bottom: 18px;
+      }
+      .cta-btn:disabled { opacity: .55; cursor: default; }
+      .server-note {
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--ink-faint);
+        margin: 0 2px 14px;
+      }
+      .extract-error {
+        border: 1px solid color-mix(in srgb, var(--bad) 45%, var(--line));
+        background: var(--bad-bg);
+        color: var(--ink);
+        border-radius: 12px;
+        padding: 11px 14px;
+        font-size: 14px;
+        line-height: 1.55;
+        margin-bottom: 12px;
+      }
+      .photo-drop {
+        width: 100%;
+        appearance: none;
+        font: inherit;
+        border: 1.5px dashed var(--line);
+        background: var(--surface);
+        color: var(--ink);
+        border-radius: var(--radius);
+        padding: 26px 16px;
+        text-align: center;
+        cursor: pointer;
+        margin-bottom: 12px;
+      }
+      .photo-drop .pd-title { font-size: 16.5px; font-weight: 700; margin-bottom: 4px; }
+      .photo-drop .pd-sub { font-size: 13px; color: var(--ink-soft); line-height: 1.55; }
+      .photo-thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+      .photo-thumb { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--surface-2); }
+      .photo-thumb img { display: block; width: 100%; height: 88px; object-fit: cover; }
+      .photo-thumb .pt-name {
+        font-size: 11px; color: var(--ink-soft); padding: 4px 6px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .photo-thumb .pt-rm {
+        position: absolute; top: 5px; right: 5px;
+        appearance: none; border: none; cursor: pointer;
+        width: 24px; height: 24px; border-radius: 50%;
+        background: rgba(20, 18, 12, .72); color: #fff;
+        font-size: 14px; line-height: 1; padding: 0;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .photo-add {
+        appearance: none; font: inherit; cursor: pointer;
+        border: 1.5px dashed var(--line); border-radius: 10px;
+        background: transparent; color: var(--ink-soft);
+        font-size: 13.5px; font-weight: 600; min-height: 88px;
+      }
+      .extract-status {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 26px 20px;
+        text-align: center;
+        margin-bottom: 12px;
+      }
+      .wake-spinner {
+        width: 28px; height: 28px; border-radius: 50%;
+        border: 3px solid var(--surface-2); border-top-color: var(--accent);
+        margin: 2px auto 12px;
+        animation: wake-spin .8s linear infinite;
+      }
+      @keyframes wake-spin { to { transform: rotate(360deg); } }
+      .extract-status .es-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+      .extract-status .es-sub { font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; margin: 0; }
+      .group-input {
+        appearance: none;
+        font: inherit;
+        width: 100%;
+        padding: 11px 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface);
+        color: var(--ink);
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 14px;
+      }
+      .draft-list { display: grid; gap: 10px; margin-bottom: 14px; }
+      .draft-item {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        padding: 14px 16px;
+      }
+      .draft-top { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
+      .draft-word { font-family: Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 700; word-break: break-word; }
+      .draft-del {
+        margin-left: auto; flex: none;
+        appearance: none; font: inherit; cursor: pointer;
+        background: transparent; border: 1px solid color-mix(in srgb, var(--bad) 45%, var(--line));
+        color: var(--bad); font-size: 12.5px; font-weight: 600;
+        padding: 4px 11px; border-radius: 99px;
+      }
+      .draft-meaning { font-size: 16.5px; font-weight: 600; margin-bottom: 10px; }
+      .draft-phrase {
+        font-family: Georgia, "Times New Roman", serif;
+        font-style: italic;
+        font-size: 14.5px;
+        color: var(--ink-soft);
+        margin-bottom: 10px;
+        line-height: 1.55;
+      }
+      .draft-hook { max-width: none; margin-bottom: 2px; }
+      .draft-trap { font-size: 13px; color: var(--bad); margin-top: 8px; line-height: 1.55; }
+      .extract-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+      @media (prefers-reduced-motion: reduce) {
+        .wake-spinner { animation: none; }
+      }
+
+      .view-study-pad { padding-top: 44px; }
+      .back-glass {
+        appearance: none;
+        position: fixed;
+        top: calc(10px + env(safe-area-inset-top, 0px));
+        left: calc(12px + env(safe-area-inset-left, 0px));
+        z-index: 60;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        color: var(--ink);
+        border-radius: 50%;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.03) 60%);
+        backdrop-filter: blur(14px) saturate(1.6);
+        -webkit-backdrop-filter: blur(14px) saturate(1.6);
+        box-shadow:
+          0 8px 20px var(--glass-shadow-soft),
+          0 2px 6px var(--glass-shadow-soft),
+          inset 0 1px 0 var(--glass-hi),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+        transition: transform .16s ease, box-shadow .16s ease;
+        animation: back-fade .3s ease-out both;
+      }
+      .back-glass.show { display: inline-flex; }
+      @keyframes back-fade { from { opacity: 0; } to { opacity: 1; } }
+      .back-glass svg { display: block; }
+      @media (hover: hover) {
+        .back-glass:hover {
+          transform: translateY(-1px);
+          box-shadow:
+            0 14px 28px var(--glass-shadow-soft),
+            0 5px 10px var(--glass-shadow-soft),
+            inset 0 1px 0 var(--glass-hi),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.07);
+        }
+      }
+      .back-glass:active {
+        transform: translateY(1px) scale(.98);
+        box-shadow:
+          0 3px 8px var(--glass-shadow-soft),
+          inset 0 1px 0 var(--glass-hi),
+          inset 0 2px 5px rgba(0, 0, 0, 0.10);
+      }
+
+      @keyframes home-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      .home-flow > * { animation: home-rise .5s cubic-bezier(.22,.75,.3,1) both; }
+      .home-flow > *:nth-child(2) { animation-delay: .06s; }
+      .home-flow > *:nth-child(3) { animation-delay: .12s; }
+      .home-flow > *:nth-child(4) { animation-delay: .18s; }
+      .home-flow > *:nth-child(5) { animation-delay: .24s; }
+      .home-flow > *:nth-child(6) { animation-delay: .30s; }
+      .home-flow > *:nth-child(7) { animation-delay: .36s; }
+      .home-flow > *:nth-child(8) { animation-delay: .42s; }
+      .home-flow > *:nth-child(9) { animation-delay: .48s; }
+
+      @keyframes view-in-right { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
+      @keyframes view-in-left { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }
+      @keyframes view-in-soft { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      .view-enter { animation: view-in-right .38s cubic-bezier(.22,.75,.3,1) both; }
+      .view-enter-back { animation: view-in-left .38s cubic-bezier(.22,.75,.3,1) both; }
+      .view-enter-soft { animation: view-in-soft .26s ease-out both; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .card { transition: none; }
+        .back-glass { transition: none; animation: none; }
+        .nav-btn { transition: none; }
+        .bar .seg-know, .bar .seg-unknow { transition: none; }
+        .fan-card { animation: none; }
+        .fan-card.swap { transition: none; }
+        button.fan-zone { transition: none; }
+        .mini-bar span { transition: none; }
+        .wanted-item { transition: none; }
+        .home-flow > * { animation: none; }
+        .view-enter, .view-enter-back, .view-enter-soft { animation: none; }
+        .splash { transition: none; }
+        .splash-brand, .splash-hint { animation: none; }
+        .splash-map .draw { animation: none; stroke-dashoffset: 0; }
+        .splash-map .fade-el { animation: none; opacity: .75; }
+        .splash-map .prints ellipse { animation: none; opacity: .6; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="splashRoot"></div>
+    <button class="back-glass" id="backBtn" type="button" aria-label="返回首页">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M14.8 5.2 8.1 12l6.7 6.8" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="mwc-wrap" id="app"></div>
+
+    <script>
+      "use strict";
+      /* ===== 20 sample words — 示例词 (replaced set, verbatim) ===== */
+      var WORDS = [
+        {id:1, word:"sanction", phon:"ˈsæŋkʃn", meaning:"制裁；批准", example:"The UN imposed sanctions on the country.", hook:"神圣的裁决，可以是惩罚也可以是许可", trap:"两个意思完全相反，看上下文", group:"sample"},
+        {id:2, word:"oversight", phon:"ˈəʊvəsaɪt", meaning:"疏忽；监督", example:"It was a mere oversight.", hook:"over（上）+ sight（看），在上面看着 = 监督，看漏了 = 疏忽", trap:"一词两义", group:"sample"},
+        {id:3, word:"peruse", phon:"pəˈruːz", meaning:"细读", example:"He perused the contract carefully before signing.", hook:"per-（完全）+ use（用），仔仔细细地用眼 → 细读", trap:"不是“粗略浏览”，恰恰相反", group:"sample"},
+        {id:4, word:"enormity", phon:"ɪˈnɔːməti", meaning:"巨大；罪大恶极", example:"They were shocked by the enormity of the disaster.", hook:"e-（出）+ norm（标准），超出标准 → 巨大；大到犯罪的程度 → 罪大恶极", trap:"别只记“巨大”，正式语境常指“骇人听闻”", group:"sample"},
+        {id:5, word:"unleash", phon:"ʌnˈliːʃ", meaning:"释放", example:"The new policy unleashed the creativity of young people.", hook:"un-（解开）+ leash（狗链），解开链子放出来", group:"sample"},
+        {id:6, word:"ecosystem", phon:"ˈiːkəʊsɪstəm", meaning:"生态系统", example:"Protecting the forest ecosystem is vital.", hook:"eco-（生态）+ system（系统）", group:"sample"},
+        {id:7, word:"contemporary", phon:"kənˈtempərəri", meaning:"当代的", example:"She is one of the greatest contemporary writers.", hook:"con-（共同）+ tempor（时间），和我们同一时间的 → 当代的", group:"sample"},
+        {id:8, word:"pessimism", phon:"ˈpesɪmɪzəm", meaning:"悲观", example:"His pessimism about the economy proved wrong.", hook:"pess-（坏）+ -ism，总往坏处想", group:"sample"},
+        {id:9, word:"relentless", phon:"rɪˈlentləs", meaning:"不懈的；无情的", example:"She pursued her goal with relentless determination.", hook:"relent（缓和）+ -less，毫不缓和 → 不懈的", group:"sample"},
+        {id:10, word:"mindset", phon:"ˈmaɪndset", meaning:"思维模式", example:"A growth mindset helps you learn from failure.", hook:"mind（脑）+ set（定型），脑子里定型的想法", group:"sample"},
+        {id:11, word:"tenure", phon:"ˈtenjə(r)", meaning:"任期；终身教职", example:"He was granted tenure after six years of teaching.", hook:"ten-（持有），保住职位 → 终身教职；任期", group:"sample"},
+        {id:12, word:"artifact", phon:"ˈɑːtɪfækt", meaning:"人工制品；文物", example:"The museum displays artifacts from ancient Egypt.", hook:"art-（人工）+ fact（做），人造的东西", group:"sample"},
+        {id:13, word:"take a toll on", phon:"teɪk ə təʊl ɒn", meaning:"对……造成损害", example:"Lack of sleep takes a toll on your health.", hook:"toll 是“通行费”，健康在交费", group:"sample"},
+        {id:14, word:"get by", phon:"ɡet baɪ", meaning:"勉强度日；应付过去", example:"We can get by on a small budget.", hook:"get（过）+ by（过去），凑合着过下去", group:"sample"},
+        {id:15, word:"refrain from", phon:"rɪˈfreɪn frəm", meaning:"克制；避免", example:"Please refrain from smoking here.", hook:"re-（回）+ frain（刹住），把自己刹住 → 克制", group:"sample"},
+        {id:16, word:"cognitive bias", phon:"ˈkɒɡnətɪv ˈbaɪəs", meaning:"认知偏差", example:"Confirmation bias is a common cognitive bias.", hook:"cognitive（认知的）+ bias（偏见），大脑自带的偏见", group:"sample"},
+        {id:17, word:"inflammable", phon:"ɪnˈflæməbl", meaning:"易燃的", example:"Petrol is highly inflammable.", hook:"in-（进入）+ flamm（火焰），一点就着", trap:"in- 在这里不是否定，inflammable = flammable（易燃的）", group:"sample"},
+        {id:18, word:"susceptible (to)", phon:"səˈseptəbl", meaning:"易受……影响的", example:"Children are more susceptible to colds.", hook:"sus-（下面）+ cept（接受），从下面接住 → 容易中招", trap:"后面固定接 to", group:"sample"},
+        {id:19, word:"yield", phon:"jiːld", meaning:"产出；屈服", example:"The field yields 500 kg of wheat per year.", hook:"产量义最常考", trap:"文中是“产量”就别写“屈服”", group:"sample"},
+        {id:20, word:"infringe", phon:"ɪnˈfrɪndʒ", meaning:"侵犯", example:"Copying the book would infringe copyright.", hook:"in-（进入）+ fring（边缘），踩过界 → 侵犯", group:"sample"}
+      ];
+
+      /* ===== Groups & collections — one sample group「示例词」 ===== */
+      var GROUPS = [
+        { key: "sample", label: "示例词", tag: "示例词" }
+      ];
+      var COLLECTIONS = [];
+      var LADDER = [1, 2, 4, 7, 15, 30];
+      var LAST_STAGE = LADDER.length - 1;
+
+      /* ===== Dates (Asia/Shanghai, same as the main version) ===== */
+      function todayStr() {
+        try {
+          return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai" }).format(new Date());
+        } catch (e) {
+          var d = new Date();
+          function p(n){ return (n < 10 ? "0" : "") + n; }
+          return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+        }
+      }
+      function addDays(dateStr, days) {
+        var d = new Date(dateStr + "T00:00:00Z");
+        d.setUTCDate(d.getUTCDate() + days);
+        return d.toISOString().slice(0, 10);
+      }
+      var TODAY = todayStr();
+
+      /* ===== Progress persistence — the visitor's own browser (localStorage) =====
+         Marks, ladder stage, due dates and fail streaks are saved on this
+         device only, so a refresh keeps the review progress. */
+      var LS_KEY = "mwc-trial-progress-v1";
+      var store = { progress: {}, backup: null, profile: null };
+      function loadStore() {
+        try {
+          var raw = window.localStorage.getItem(LS_KEY);
+          if (!raw) return;
+          var parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            if (parsed.progress && typeof parsed.progress === "object") store.progress = parsed.progress;
+            if (parsed.backup !== undefined) store.backup = parsed.backup;
+            if (parsed.profile && typeof parsed.profile === "object") store.profile = parsed.profile;
+          }
+        } catch (e) { /* storage unavailable: run in-memory only */ }
+      }
+      function saveStore() {
+        try {
+          window.localStorage.setItem(LS_KEY, JSON.stringify(store));
+        } catch (e) { /* storage unavailable: keep in-memory state */ }
+      }
+      loadStore();
+
+      function prog(word) {
+        if (!store.progress[word]) store.progress[word] = { mark: null, stage: null, dueOn: null, failStreak: 0 };
+        return store.progress[word];
+      }
+      function markOf(word) { var p = store.progress[word]; return p ? p.mark : null; }
+      function isScheduled(word) { var p = store.progress[word]; return !!(p && p.dueOn != null); }
+      function isDue(word) { var p = store.progress[word]; return !!(p && p.dueOn != null && p.dueOn <= TODAY); }
+
+      /* ===== Helpers ===== */
+      function $(id) { return document.getElementById(id); }
+      function esc(s) {
+        return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+      function shuffleArr(a) {
+        var arr = a.slice();
+        for (var i = arr.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+        }
+        return arr;
+      }
+      function groupTag(key) {
+        for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i].key === key) return GROUPS[i].tag;
+        return key;
+      }
+      function groupLabel(key) {
+        for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i].key === key) return GROUPS[i].label;
+        return key;
+      }
+      function wordByName(name) {
+        for (var i = 0; i < WORDS.length; i++) if (WORDS[i].word === name) return WORDS[i];
+        return null;
+      }
+      function reducedMotion() {
+        return typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      }
+      function blankedPhrase(item) {
+        var re = new RegExp(item.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+        if (re.test(item.example)) return item.example.replace(re, "______");
+        return "（结合释义选出对应的词）";
+      }
+
+      /* ===== View / study state (mirrors the main version) ===== */
+      var view = store.profile ? "home" : "onboarding"; // home | study | extract | onboarding (first visit, before a profile is saved)
+      var viewAnim = 0;
+      var mode = "cards";              // cards | quiz
+      var modeAnim = 0;
+      var group = "all";
+      var collection = "all";
+      var srcOpen = false;
+      var onlyUnknow = false;
+      var deckKind = "normal";         // normal | review
+      var reviewList = [];
+      var curWord = null;
+      var order = null;
+      var flipped = false;
+      var meaningShown = false;
+      var screen = null;               // {pass, deckWords, passMarks, clean, recovered}
+      var screenSummary = null;        // {clean, recovered, failedWords}
+      var quiz = null;                 // {order, i, correct, answered, locked, picked, options}
+      var confirmClear = false;
+      var restoreNote = null;
+      var shuffling = false;
+      var switching = false;
+      var touchX = null;
+
+      /* ===== Photo extract state (trial backend) ===== */
+      var API_BASE = "https://muggle-word-cards-api.onrender.com";
+      var exStage = "pick";            // pick | compressing | extracting | draft | importing | done
+      var exFiles = [];                // [{file, url}]
+      var exGroupLabel = "";
+      var exDraft = [];                // normalized draft words the user kept
+      var exError = "";
+      var exResult = null;             // {groupLabel, imported, skipped}
+      var exElapsedTimer = null;
+      var exStartedAt = 0;
+
+      function activeCollection() {
+        for (var i = 0; i < COLLECTIONS.length; i++) if (COLLECTIONS[i].key === collection) return COLLECTIONS[i];
+        return null;
+      }
+      function groupWords() {
+        var col = activeCollection();
+        return WORDS.filter(function (x) {
+          if (col && col.groups.indexOf(x.group) === -1) return false;
+          return group === "all" || x.group === group;
+        });
+      }
+      function visibleGroups() {
+        var col = activeCollection();
+        if (!col) return GROUPS.filter(function (g) { return WORDS.some(function (w) { return w.group === g.key; }); });
+        return GROUPS.filter(function (g) { return col.groups.indexOf(g.key) !== -1 && WORDS.some(function (w) { return w.group === g.key; }); });
+      }
+      function counts() {
+        var know = 0, unknow = 0, due = 0, unscheduled = 0;
+        WORDS.forEach(function (w) {
+          var m = markOf(w.word);
+          if (m === "know") know++;
+          else if (m === "unknow") unknow++;
+          if (isDue(w.word)) due++;
+          if (!isScheduled(w.word)) unscheduled++;
+        });
+        return { know: know, unknow: unknow, due: due, unscheduled: unscheduled, marked: know + unknow };
+      }
+      function clearedScheduledCount() {
+        var n = 0;
+        WORDS.forEach(function (w) {
+          var p = store.progress[w.word];
+          if (markOf(w.word) === null && isScheduled(w.word) && p && p.stage != null) n++;
+        });
+        return n;
+      }
+      function wantedList() {
+        var list = [];
+        WORDS.forEach(function (w) {
+          var p = store.progress[w.word];
+          if (p && p.failStreak >= 2) list.push({ p: p, item: w });
+        });
+        list.sort(function (a, b) { return b.p.failStreak - a.p.failStreak; });
+        return list;
+      }
+      function baseList() {
+        if (screen) {
+          return screen.deckWords.map(wordByName).filter(Boolean);
+        }
+        if (deckKind === "review") {
+          return reviewList.map(wordByName).filter(Boolean);
+        }
+        var list = groupWords();
+        if (onlyUnknow) list = list.filter(function (x) { return markOf(x.word) === "unknow"; });
+        return list;
+      }
+      function deck() {
+        var base = baseList();
+        if (!order) return base;
+        var rank = {};
+        order.forEach(function (w, i) { rank[w] = i; });
+        return base.slice().sort(function (a, b) {
+          var ra = rank[a.word] != null ? rank[a.word] : 9999;
+          var rb = rank[b.word] != null ? rank[b.word] : 9999;
+          return ra - rb;
+        });
+      }
+      function deckIdx(d) {
+        if (d.length === 0) return 0;
+        for (var i = 0; i < d.length; i++) if (d[i].word === curWord) return i;
+        return 0;
+      }
+      function unscheduledInScope() {
+        return groupWords().filter(function (x) { return !isScheduled(x.word); });
+      }
+
+      /* ===== Splash (same intro as the main version) ===== */
+      var splashLeaving = false, splashGone = false, splashTimers = [];
+      function dismissSplash() {
+        if (splashLeaving || splashGone) return;
+        splashTimers.forEach(clearTimeout); splashTimers = [];
+        splashLeaving = true; renderSplash();
+        splashTimers.push(setTimeout(function () { splashGone = true; renderSplash(); }, 480));
+      }
+      function renderSplash() {
+        var root = $("splashRoot");
+        if (splashGone) { root.innerHTML = ""; return; }
+        root.innerHTML =
+          '<button type="button" class="splash' + (splashLeaving ? " leaving" : "") + '" id="splashBtn" aria-label="Muggle Word Cards — 点任意处进入">' +
+            '<span class="splash-map" aria-hidden="true"><svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" focusable="false">' +
+              '<rect class="draw frame" x="18" y="18" width="364" height="764" pathLength="100" />' +
+              '<rect class="draw frame-inner" x="30" y="30" width="340" height="740" pathLength="100" />' +
+              '<path class="draw trail" pathLength="100" d="M 56 692 C 110 640, 84 574, 142 522 C 196 474, 300 478, 322 408 C 340 350, 236 322, 218 264 C 202 214, 262 148, 330 118" />' +
+              '<circle class="fade-el ring" cx="312" cy="622" r="34" style="animation-delay:1s" />' +
+              '<circle class="fade-el ring" cx="84" cy="206" r="21" style="animation-delay:1.15s" />' +
+              '<g class="fade-el" style="animation-delay:1.25s"><path class="compass" d="M 322 82 L 330 108 L 356 116 L 330 124 L 322 150 L 314 124 L 288 116 L 314 108 Z" /><circle class="compass-dot" cx="322" cy="116" r="4" /></g>' +
+              '<g class="fade-el" style="animation-delay:1.35s"><path class="x-mark" d="M 66 622 L 90 646 M 90 622 L 66 646" /></g>' +
+              '<g class="prints">' +
+                '<ellipse cx="62" cy="684" rx="5" ry="9" transform="rotate(-32 62 684)" style="animation-delay:.55s" />' +
+                '<ellipse cx="82" cy="672" rx="5" ry="9" transform="rotate(-18 82 672)" style="animation-delay:.7s" />' +
+                '<ellipse cx="94" cy="648" rx="5" ry="9" transform="rotate(6 94 648)" style="animation-delay:.85s" />' +
+                '<ellipse cx="112" cy="632" rx="5" ry="9" transform="rotate(24 112 632)" style="animation-delay:1s" />' +
+                '<ellipse cx="112" cy="606" rx="5" ry="9" transform="rotate(38 112 606)" style="animation-delay:1.15s" />' +
+                '<ellipse cx="128" cy="584" rx="5" ry="9" transform="rotate(28 128 584)" style="animation-delay:1.3s" />' +
+              '</g>' +
+            '</svg></span>' +
+            '<span class="splash-brand"><span class="splash-title">Muggle Word Cards</span><span class="brand-rule" aria-hidden="true"><span></span></span></span>' +
+            '<span class="splash-hint" aria-hidden="true">轻点任意处进入</span>' +
+          '</button>';
+        $("splashBtn").addEventListener("click", dismissSplash);
+      }
+
+      /* ===== Home fan ===== */
+      var FAN_ROT = [-26, -12, 0, 12, 26];
+      var FAN_LIFT = [0, 0, -10, 0, 0];
+      var fanCenter = 0, fanSwap = null, fanDragX = 0, fanDragging = false;
+      var fanPointer = null, fanSuppressClick = false;
+      var FAN_SWAP_MS = 540;
+      function modN(a, n) { return ((a % n) + n) % n; }
+      function fanFont(w) { return w.length > 10 ? "12.5px" : w.length > 8 ? "14px" : undefined; }
+      function cycleFan(dir) {
+        var n = WORDS.length;
+        if (n === 0) return;
+        var centerIdx = modN(fanCenter, n);
+        var incoming = WORDS[modN(centerIdx - dir, n)];
+        var outgoing = WORDS[centerIdx];
+        if (!reducedMotion()) {
+          if (fanSwap || !incoming || !outgoing) return;
+          fanSwap = { incoming: incoming.word, outgoing: outgoing.word };
+          setTimeout(function () { fanSwap = null; renderFan(); }, FAN_SWAP_MS + 60);
+        }
+        fanCenter = fanCenter - dir;
+        renderFan();
+      }
+      function renderFan() {
+        var zone = $("fanZone");
+        if (!zone) return;
+        var n = WORDS.length;
+        var centerIdx = modN(fanCenter, n);
+        // Build the fan DOM once, keyed by word (like the main version):
+        // each physical card persists and glides to its new slot on a cut.
+        if (zone.getAttribute("data-built") !== "1") {
+          var html = '<div class="fan-shadow" aria-hidden="true"></div>';
+          WORDS.forEach(function (w, i) {
+            html += '<div class="fan-card swap offfan" data-fan="' + i + '" aria-hidden="true" style="z-index:0"><span class="fan-word"></span><span class="fan-phon" style="display:none"></span></div>';
+          });
+          zone.innerHTML = html;
+          zone.setAttribute("data-built", "1");
+        }
+        var defs = [
+          { off: -2, kind: "pattern" }, { off: -1, kind: "word" }, { off: 0, kind: "cover" },
+          { off: 1, kind: "word" }, { off: 2, kind: "pattern" }
+        ];
+        var slotOf = {};
+        defs.forEach(function (d, s) { slotOf[modN(centerIdx + d.off, n)] = { slot: s, kind: d.kind }; });
+        var els = zone.querySelectorAll("[data-fan]");
+        for (var i = 0; i < els.length; i++) {
+          var el = els[i];
+          var wi = parseInt(el.getAttribute("data-fan"), 10);
+          var w = WORDS[wi];
+          var info = slotOf[wi];
+          var wordSpan = el.querySelector(".fan-word");
+          var phonSpan = el.querySelector(".fan-phon");
+          if (!info) {
+            el.className = "fan-card swap offfan";
+            el.style.zIndex = "0";
+            continue;
+          }
+          var s = info.slot;
+          var z = info.kind === "cover" ? 3 : info.kind === "word" ? 2 : 1;
+          if (fanSwap && w) {
+            if (w.word === fanSwap.incoming) z = 6;
+            else if (w.word === fanSwap.outgoing) z = 5;
+          }
+          el.className = "fan-card swap" + (info.kind === "cover" ? " center" : info.kind === "word" ? " mid" : " back-pattern");
+          el.style.setProperty("--r", FAN_ROT[s] + "deg");
+          el.style.setProperty("--ty", FAN_LIFT[s] + "px");
+          el.style.transform = "rotate(" + FAN_ROT[s] + "deg) translateY(" + FAN_LIFT[s] + "px)";
+          el.style.zIndex = String(z);
+          el.style.fontSize = (info.kind !== "pattern" && fanFont(w.word)) ? fanFont(w.word) : "";
+          if (info.kind === "pattern") {
+            wordSpan.textContent = "";
+            phonSpan.style.display = "none";
+          } else {
+            wordSpan.textContent = w.word;
+            if (info.kind === "cover" && w.phon) {
+              phonSpan.textContent = "/" + w.phon + "/";
+              phonSpan.style.display = "";
+            } else {
+              phonSpan.style.display = "none";
+            }
+          }
+        }
+        var centerWord = WORDS[centerIdx];
+        zone.setAttribute("aria-label", "示例词卡扇，当前是 " + (centerWord ? centerWord.word : "") + "，点按或左右滑动切换卡牌");
+        zone.style.transform = fanDragX !== 0 ? "translateX(" + fanDragX + "px)" : "";
+        zone.className = "fan-zone" + (fanDragging ? " dragging" : "");
+      }
+
+      /* ===== Navigation between views ===== */
+      function showStudy() { view = "study"; viewAnim++; window.scrollTo(0, 0); render(); }
+      function showHome() { stopExTimer(); view = "home"; viewAnim++; window.scrollTo(0, 0); render(); }
+      function showExtract() { view = "extract"; viewAnim++; window.scrollTo(0, 0); render(); }
+
+      /* ===== Card navigation (soft slide, same as the main version) ===== */
+      function goToIndex(n) {
+        var d = deck();
+        var target = d[n];
+        if (!target) return;
+        curWord = target.word; flipped = false; meaningShown = false;
+        renderStudyBody();
+      }
+      function softGo(delta) {
+        var d = deck();
+        var idx = deckIdx(d);
+        var n = idx + delta;
+        if (n < 0 || n >= d.length) return;
+        var scene = $("cardScene");
+        if (reducedMotion() || switching || !scene || !scene.animate) { goToIndex(n); return; }
+        switching = true;
+        var out = scene.animate(
+          [{ opacity: 1, transform: "translateX(0px)" }, { opacity: 0, transform: "translateX(" + (-10 * delta) + "px)" }],
+          { duration: 130, easing: "ease-in", fill: "forwards" }
+        );
+        out.onfinish = function () {
+          goToIndex(n);
+          var scene2 = $("cardScene");
+          if (!scene2) { switching = false; return; }
+          var inn = scene2.animate(
+            [{ opacity: 0, transform: "translateX(" + (12 * delta) + "px)" }, { opacity: 1, transform: "translateX(0px)" }],
+            { duration: 300, easing: "cubic-bezier(.22,.75,.3,1)", fill: "forwards" }
+          );
+          inn.onfinish = function () { switching = false; };
+          setTimeout(function () { switching = false; }, 380);
+        };
+      }
+      function tapCard() {
+        if (!flipped) { flipped = true; }
+        else if (!meaningShown) { meaningShown = true; }
+        else { flipped = false; meaningShown = false; }
+        renderStudyBody();
+      }
+
+      /* ===== Screening — tonight's three shuffled passes ===== */
+      function startScreening() {
+        var scope = unscheduledInScope().map(function (x) { return x.word; });
+        if (scope.length === 0) return;
+        screenSummary = null; deckKind = "normal"; onlyUnknow = false; order = null;
+        screen = { pass: 1, deckWords: scope, passMarks: {}, clean: [], recovered: [] };
+        curWord = scope[0] || null; flipped = false; meaningShown = false; mode = "cards";
+        render();
+      }
+      function exitScreening() { screen = null; order = null; curWord = null; render(); }
+      function exitScreeningSilent() { screen = null; screenSummary = null; }
+      function finishPass() {
+        if (!screen) return;
+        var knownThisPass = screen.deckWords.filter(function (w) { return screen.passMarks[w] === "know"; });
+        var unknownThisPass = screen.deckWords.filter(function (w) { return screen.passMarks[w] !== "know"; });
+        var clean = screen.pass === 1 ? screen.clean.concat(knownThisPass) : screen.clean;
+        var recovered = screen.pass > 1 ? screen.recovered.concat(knownThisPass) : screen.recovered;
+        if (unknownThisPass.length === 0 || screen.pass >= 3) {
+          var failed = screen.pass >= 3 ? unknownThisPass : [];
+          var today = TODAY;
+          clean.forEach(function (w) { var p = prog(w); p.mark = "know"; p.stage = 2; p.dueOn = addDays(today, LADDER[2]); p.failStreak = 0; });
+          recovered.forEach(function (w) { var p = prog(w); p.mark = "know"; p.stage = 1; p.dueOn = addDays(today, LADDER[1]); p.failStreak = 0; });
+          failed.forEach(function (w) { var p = prog(w); p.mark = "unknow"; p.stage = 0; p.dueOn = addDays(today, LADDER[0]); p.failStreak = 0; });
+          saveStore();
+          screenSummary = { clean: clean.length, recovered: recovered.length, failedWords: failed };
+          screen = null; order = null; curWord = null;
+          render();
+          return;
+        }
+        var nextDeck = shuffleArr(unknownThisPass);
+        screen = { pass: screen.pass + 1, deckWords: nextDeck, passMarks: {}, clean: clean, recovered: recovered };
+        order = null; curWord = nextDeck[0] || null; flipped = false; meaningShown = false;
+        render();
+      }
+
+      /* ===== Marking & review (ladder logic identical to the main version) ===== */
+      function setMark(word, mark) { prog(word).mark = mark; saveStore(); }
+      function recordReview(word, known) {
+        var p = prog(word);
+        if (known) { p.stage = Math.min((p.stage == null ? 0 : p.stage) + 1, LAST_STAGE); p.failStreak = 0; }
+        else { p.stage = 0; p.failStreak = (p.failStreak || 0) + 1; }
+        p.dueOn = addDays(TODAY, LADDER[p.stage]);
+        p.mark = known ? "know" : "unknow";
+        saveStore();
+      }
+      function applyMark(kind) {
+        var d = deck(); var idx = deckIdx(d); var item = d[idx];
+        if (!item) return;
+        if (deckKind === "review" && !screen) { answerReview(kind === "know"); return; }
+        var cur = markOf(item.word);
+        var next = cur === kind ? null : kind;
+        setMark(item.word, next);
+        if (screen) {
+          if (next) screen.passMarks[item.word] = next;
+          else delete screen.passMarks[item.word];
+        }
+        if (!onlyUnknow && next === "know" && idx < d.length - 1) {
+          renderStudyBody();
+          softGo(1);
+        } else {
+          renderStudyBody();
+        }
+      }
+      function answerReview(known) {
+        var d = deck(); var idx = deckIdx(d); var item = d[idx];
+        if (!item) return;
+        var answered = item.word;
+        recordReview(answered, known);
+        var remaining = reviewList.filter(function (w) { return w !== answered; });
+        reviewList = remaining;
+        var nextWord = remaining[Math.min(idx, Math.max(remaining.length - 1, 0))] || null;
+        curWord = nextWord; flipped = false; meaningShown = false;
+        render();
+      }
+      function startReview() {
+        var due = WORDS.filter(function (x) { return isDue(x.word); }).sort(function (a, b) {
+          var da = (store.progress[a.word] || {}).dueOn || "";
+          var db = (store.progress[b.word] || {}).dueOn || "";
+          return da < db ? -1 : da > db ? 1 : 0;
+        }).map(function (x) { return x.word; });
+        if (due.length === 0) return;
+        exitScreeningSilent();
+        deckKind = "review"; reviewList = due; order = null;
+        curWord = due[0] || null; flipped = false; meaningShown = false; mode = "cards";
+        showStudy();
+      }
+      function exitReview() { deckKind = "normal"; reviewList = []; curWord = null; }
+
+      /* ===== Shuffle — poker riffle, ported from the main version ===== */
+      function doShuffle() {
+        if (shuffling) return;
+        var d = deck();
+        var cardEl = $("cardEl"), scene = $("cardScene");
+        if (reducedMotion() || d.length < 3 || !cardEl || !cardEl.animate || !scene) {
+          order = shuffleArr(d.map(function (x) { return x.word; }));
+          curWord = d[0] ? d[0].word : null; flipped = false; meaningShown = false;
+          renderStudyBody();
+          return;
+        }
+        shuffling = true; renderStudyBody();
+        scene = $("cardScene"); cardEl = $("cardEl");
+        if (!scene || !cardEl) { shuffling = false; return; }
+        var stage = document.createElement("div");
+        stage.className = "shuffle-stage";
+        scene.appendChild(stage);
+        var N = 12, minis = [], startRot = [], i, mc;
+        for (i = 0; i < N; i++) {
+          mc = document.createElement("div");
+          mc.className = "mini-card";
+          var r0 = ((i % 5) - 2) * 1.6;
+          startRot.push(r0);
+          mc.style.zIndex = String(i);
+          mc.style.transform = "translate(-50%,-50%) rotate(" + r0 + "deg)";
+          stage.appendChild(mc); minis.push(mc);
+        }
+        cardEl.style.visibility = "hidden";
+        var pileX = Math.min(78, Math.max(52, scene.clientWidth / 4 - 6));
+        var pileOf = [];
+        minis.forEach(function (m, j) {
+          var side = j % 2 === 0 ? -1 : 1;
+          var pileRot = side * (5 + (j % 3) * 1.5);
+          var pile = "translate(calc(-50% + " + (side * pileX) + "px), -50%) rotate(" + pileRot + "deg)";
+          pileOf[j] = pile;
+          m.animate(
+            [{ transform: "translate(-50%,-50%) rotate(" + startRot[j] + "deg)" }, { transform: pile }],
+            { duration: 240, delay: j * 12, easing: "cubic-bezier(.3,.7,.4,1)", fill: "forwards" }
+          );
+        });
+        var riffleStart = 240 + N * 12 + 70;
+        minis.forEach(function (m, j) {
+          var landRot = ((j * 37) % 7) - 3;
+          var landY = (N - j) * 0.8;
+          m.animate(
+            [{ transform: pileOf[j] || "" }, { transform: "translate(-50%, calc(-50% + " + landY + "px)) rotate(" + landRot + "deg)" }],
+            { duration: 170, delay: riffleStart + j * 42, easing: "ease-in", fill: "forwards" }
+          );
+        });
+        var riffleEnd = riffleStart + N * 42 + 170;
+        setTimeout(function () {
+          stage.animate([{ transform: "scale(1)" }, { transform: "scale(.965)" }, { transform: "scale(1)" }], { duration: 190, easing: "ease-out" });
+        }, riffleEnd);
+        setTimeout(function () {
+          var shuffled = shuffleArr(deck().map(function (x) { return x.word; }));
+          order = shuffled;
+          curWord = shuffled[0] || null; flipped = false; meaningShown = false;
+          shuffling = false;
+          renderStudyBody();
+          var newCard = $("cardEl"), newScene = $("cardScene");
+          if (newCard) {
+            newCard.animate(
+              [{ transform: "rotateY(-32deg) scale(.94)", opacity: 0.35 }, { transform: "rotateY(0deg) scale(1)", opacity: 1 }],
+              { duration: 340, easing: "cubic-bezier(.2,.7,.3,1)" }
+            );
+          }
+          if (newScene && stage.parentNode === newScene) stage.remove();
+          else if (stage.parentNode) stage.remove();
+        }, riffleEnd + 190);
+      }
+
+      /* ===== Quiz ===== */
+      function quizOptions(target) {
+        var others = WORDS.filter(function (x) { return x.word !== target.word; });
+        var sameGroup = shuffleArr(others.filter(function (x) { return x.group === target.group; }));
+        var rest = shuffleArr(others.filter(function (x) { return x.group !== target.group; }));
+        return shuffleArr(sameGroup.concat(rest).slice(0, 3).concat([target]));
+      }
+      function startQuiz() {
+        var pool = groupWords();
+        var orderQ = shuffleArr(pool);
+        var first = orderQ[0];
+        quiz = { order: orderQ, i: 0, correct: 0, answered: 0, locked: false, picked: null, options: first ? quizOptions(first) : [] };
+      }
+      function restartQuizFor(pool) {
+        var orderQ = shuffleArr(pool);
+        var first = orderQ[0];
+        quiz = { order: orderQ, i: 0, correct: 0, answered: 0, locked: false, picked: null, options: first ? quizOptions(first) : [] };
+      }
+      function answerQuiz(pickedWord) {
+        if (!quiz || quiz.locked) return;
+        var current = quiz.order[quiz.i];
+        if (!current) return;
+        var right = pickedWord === current.word;
+        if (!markOf(current.word)) setMark(current.word, right ? "know" : "unknow");
+        quiz = { order: quiz.order, i: quiz.i, correct: quiz.correct + (right ? 1 : 0), answered: quiz.answered + 1, locked: true, picked: pickedWord, options: quiz.options };
+        renderStudyBody();
+      }
+      function nextQuiz() {
+        if (!quiz) return;
+        var ni = quiz.i + 1;
+        var nextItem = quiz.order[ni];
+        quiz = { order: quiz.order, i: ni, correct: quiz.correct, answered: quiz.answered, locked: false, picked: null, options: nextItem ? quizOptions(nextItem) : [] };
+        renderStudyBody();
+      }
+      function setMode(m) {
+        mode = m; modeAnim++;
+        if (m === "quiz") startQuiz();
+        render();
+      }
+
+      /* ===== Group / collection picking ===== */
+      function pickGroup(g) {
+        group = g; exitReview(); exitScreeningSilent(); screen = null; order = null; curWord = null;
+        confirmClear = false; restoreNote = null; srcOpen = false;
+        if (mode === "quiz") {
+          var col = activeCollection();
+          restartQuizFor(WORDS.filter(function (x) {
+            if (col && col.groups.indexOf(x.group) === -1) return false;
+            return g === "all" || x.group === g;
+          }));
+        }
+        render();
+      }
+      function pickCollection(c) {
+        collection = c; group = "all"; exitReview(); exitScreeningSilent(); screen = null; order = null; curWord = null;
+        confirmClear = false; restoreNote = null; srcOpen = false;
+        if (mode === "quiz") {
+          var col = null;
+          COLLECTIONS.forEach(function (x) { if (x.key === c) col = x; });
+          restartQuizFor(col ? WORDS.filter(function (x) { return col.groups.indexOf(x.group) !== -1; }) : WORDS.slice());
+        }
+        render();
+      }
+      function gotoWord(w) {
+        collection = "all"; group = "all"; onlyUnknow = false;
+        exitReview(); exitScreeningSilent(); order = null; mode = "cards";
+        curWord = w; flipped = false; meaningShown = false;
+        showStudy();
+      }
+
+      /* ===== Clear / restore marks ===== */
+      function clearAllMarks() {
+        var marks = {}, count = 0;
+        WORDS.forEach(function (w) {
+          var m = markOf(w.word);
+          if (m) { marks[w.word] = m; count++; }
+        });
+        store.backup = { count: count, marks: marks };
+        WORDS.forEach(function (w) { if (store.progress[w.word]) store.progress[w.word].mark = null; });
+        saveStore();
+        confirmClear = false;
+        render();
+      }
+      function restoreMarks() {
+        var restored = 0;
+        if (store.backup && store.backup.marks) {
+          Object.keys(store.backup.marks).forEach(function (w) {
+            prog(w).mark = store.backup.marks[w]; restored++;
+          });
+          store.backup = null;
+        } else {
+          WORDS.forEach(function (w) {
+            var p = store.progress[w.word];
+            if (p && markOf(w) === null && isScheduled(w) && p.stage != null) {
+              p.mark = (p.failStreak > 0 || p.stage === 0) ? "unknow" : "know";
+              restored++;
+            }
+          });
+        }
+        saveStore();
+        restoreNote = restored > 0 ? "已恢复 " + restored + " 个标记，计数和进度条都回来了。" : "没有需要恢复的标记。";
+        render();
+      }
+
+      /* ===== Card-back custom scrollbar (mirrors the main version) ===== */
+      var backBarState = null;
+      function syncBackBar() {
+        var el = $("backFace");
+        if (!el) return;
+        var track = $("backTrack");
+        if (!track) return;
+        var sh = el.scrollHeight, ch = el.clientHeight, st = el.scrollTop;
+        if (sh <= ch + 1) {
+          if (backBarState !== null) { backBarState = null; track.innerHTML = ""; }
+          return;
+        }
+        var h = Math.max(14, Math.min(100, (ch / sh) * 100));
+        var max = sh - ch;
+        var t = (max > 0 ? st / max : 0) * (100 - h);
+        if (backBarState && Math.abs(backBarState.h - h) < 0.2 && Math.abs(backBarState.t - t) < 0.2) return;
+        backBarState = { h: h, t: t };
+        track.innerHTML = '<div class="card-scroll-thumb" style="height:' + h + "%;top:" + t + '%"></div>';
+      }
+
+      /* ===== Render: home ===== */
+      function renderHome() {
+        var c = counts();
+        var wanted = wantedList();
+        var html = "";
+        html += '<section class="home-flow">';
+        html += '<button type="button" class="fan-zone" id="fanZone" aria-label="示例词卡扇"><div class="fan-shadow" aria-hidden="true"></div></button>';
+        html += '<div class="brand"><h1>Muggle Word Cards</h1><p>试用版 · 20 个示例词，来自六级真题与阅读原文</p><div class="brand-rule" aria-hidden="true"><span></span></div></div>';
+        html += '<div class="stat-grid">';
+        html += '<div class="glass-card stat-card"><div class="lbl">今日待复习</div><div class="num"><span>' + c.due + '</span> <small>词</small></div><div class="sub">' +
+          (c.due > 0 ? "已到期 · 另有 " + c.unscheduled + " 个新词待筛选" : c.unscheduled > 0 ? "暂无到期 · " + c.unscheduled + " 个新词待筛选" : "全部排进计划，暂无到期") + "</div></div>";
+        html += '<div class="glass-card stat-card"><div class="lbl">词库</div><div class="num">20 <small>词</small></div><div class="mini-bar" role="img" aria-label="已掌握 ' + c.know + ' 词，共 20 词"><span style="width:' + (c.know / 20 * 100) + '%"></span></div><div class="sub">已掌握 ' + c.know + " 词 · 示例词 1 组</div></div>";
+        html += '<div class="glass-card stat-card"><div class="lbl">认识</div><div class="num"><span>' + c.know + '</span> <small>词</small></div><div class="sub">标记为认识的词</div></div>';
+        html += '<div class="glass-card stat-card"><div class="lbl">不认识</div><div class="num"><span>' + c.unknow + '</span> <small>词</small></div><div class="sub">未标记 ' + (20 - c.marked) + " 词</div></div>";
+        html += "</div>";
+        html += '<h2 class="home-h"><span class="dot">●</span>错词通缉名单<span class="home-h-en">WANTED LIST</span></h2>';
+        if (wanted.length > 0) {
+          html += '<div class="wanted-list">';
+          wanted.forEach(function (x) {
+            html += '<button class="glass-card wanted-item" type="button" data-goto="' + esc(x.item.word) + '"><span><span class="w-word">' + esc(x.item.word) + '</span>' +
+              (x.item.phon ? '<span class="w-phon">/' + esc(x.item.phon) + "/</span>" : "") +
+              '<br /><span class="w-mean">' + esc(x.item.meaning) + '</span></span><span class="w-streak">连错 ×' + x.p.failStreak + '</span><span class="w-go">去攻克 →</span></button>';
+          });
+          html += "</div>";
+        } else {
+          html += '<div class="wanted-empty">暂时没人上榜——复习时连错两次的词会自动钉到这里。</div>';
+        }
+        html += '<button class="cta-btn" type="button" id="ctaStudy">开始背词 →</button>';
+        if (c.due > 0) html += '<button class="cta-btn review" type="button" id="ctaReview">今日复习 · ' + c.due + " 词到期 →</button>";
+        html += '<button class="cta-btn photo" type="button" id="ctaPhoto">拍照提词 · 拍文章出词卡 →</button>';
+        html += '<p class="trial-note">试用版 · 进度保存在这台设备的浏览器里</p>';
+        html += "</section>";
+        $("app").innerHTML = html;
+        $("backBtn").className = "back-glass";
+        renderFan();
+        var zone = $("fanZone");
+        zone.addEventListener("click", function () {
+          if (fanSuppressClick) { fanSuppressClick = false; return; }
+          cycleFan(1);
+        });
+        zone.addEventListener("pointerdown", function (e) {
+          fanPointer = { x: e.clientX, dx: 0 }; fanDragging = true; renderFan();
+        });
+        zone.addEventListener("pointermove", function (e) {
+          if (!fanPointer) return;
+          fanPointer.dx = e.clientX - fanPointer.x;
+          fanDragX = Math.max(-56, Math.min(56, fanPointer.dx * 0.38));
+          zone.style.transform = "translateX(" + fanDragX + "px)";
+        });
+        function fanEnd() {
+          var p = fanPointer; fanPointer = null; fanDragging = false; fanDragX = 0;
+          if (!p) { renderFan(); return; }
+          if (Math.abs(p.dx) >= 42) {
+            fanSuppressClick = true;
+            setTimeout(function () { fanSuppressClick = false; }, 400);
+            cycleFan(p.dx < 0 ? -1 : 1);
+          } else renderFan();
+        }
+        zone.addEventListener("pointerup", fanEnd);
+        zone.addEventListener("pointercancel", fanEnd);
+        $("ctaStudy").addEventListener("click", showStudy);
+        $("ctaPhoto").addEventListener("click", showExtract);
+        var cr = $("ctaReview");
+        if (cr) cr.addEventListener("click", startReview);
+        var items = $("app").querySelectorAll("[data-goto]");
+        for (var i = 0; i < items.length; i++) {
+          items[i].addEventListener("click", function () { gotoWord(this.getAttribute("data-goto")); });
+        }
+      }
+
+      /* ===== First-visit setup — same flow as the main version: brand
+         title + exam profile form. No account in the trial, so the profile
+         is kept in this browser's local store alongside the progress. ===== */
+      var EXAM_PRESETS = ["六级笔试", "四级笔试", "考研英语", "雅思", "托福"];
+      var obName = "", obDate = "", obScore = "", obError = "";
+      function syncPresetChips() {
+        var chips = $("app").querySelectorAll("[data-preset]");
+        for (var i = 0; i < chips.length; i++) {
+          chips[i].className = "preset-chip" + (chips[i].getAttribute("data-preset") === obName ? " on" : "");
+        }
+      }
+      function renderOnboarding() {
+        var html = "";
+        html += '<div class="view-enter-soft">';
+        html += '<div class="brand"><h1>Muggle Word Cards</h1><p>拍照 30 秒，把这篇阅读变成你的词卡</p><div class="brand-rule" aria-hidden="true"><span></span></div></div>';
+        html += '<section class="settings-flow">';
+        html += '<h2 class="settings-h">先定下你的考试目标</h2>';
+        html += '<p class="settings-sub">填一次就行：考试名称、日期和目标分会存在这台设备的浏览器里，下次打开直接进首页，接着背词。</p>';
+        html += '<div class="glass-card settings-card">';
+        html += '<label class="field"><span class="field-lbl">考什么</span>' +
+          '<input class="field-input" type="text" id="obName" maxlength="40" placeholder="如：六级笔试" aria-label="考试名称" value="' + esc(obName) + '" /></label>';
+        html += '<div class="preset-row" aria-label="常见考试">';
+        EXAM_PRESETS.forEach(function (p) {
+          html += '<button type="button" class="preset-chip' + (obName === p ? " on" : "") + '" data-preset="' + esc(p) + '">' + esc(p) + "</button>";
+        });
+        html += "</div>";
+        html += '<label class="field"><span class="field-lbl">考试日期</span>' +
+          '<input class="field-input" type="date" id="obDate" aria-label="考试日期" value="' + esc(obDate) + '" /></label>';
+        html += '<label class="field"><span class="field-lbl">目标分数</span>' +
+          '<input class="field-input" type="number" inputmode="numeric" min="1" max="1000" id="obScore" placeholder="如：500" aria-label="目标分数" value="' + esc(obScore) + '" /></label>';
+        html += '<div class="form-error" id="obError" role="alert"' + (obError ? "" : ' style="display:none"') + ">" + esc(obError) + "</div>";
+        html += '<button class="cta-btn settings-save" type="button" id="obSave">保存，开始背词 →</button>';
+        html += "</div></section></div>";
+        $("app").innerHTML = html;
+        $("backBtn").className = "back-glass";
+        $("obName").addEventListener("input", function () { obName = this.value; syncPresetChips(); });
+        $("obDate").addEventListener("input", function () { obDate = this.value; });
+        $("obDate").addEventListener("change", function () { obDate = this.value; });
+        $("obScore").addEventListener("input", function () { obScore = this.value; });
+        var chips = $("app").querySelectorAll("[data-preset]");
+        for (var i = 0; i < chips.length; i++) {
+          chips[i].addEventListener("click", function () {
+            obName = this.getAttribute("data-preset");
+            var inp = $("obName"); if (inp) inp.value = obName;
+            syncPresetChips();
+          });
+        }
+        $("obSave").addEventListener("click", submitOnboarding);
+      }
+      function submitOnboarding() {
+        function fail(msg) {
+          obError = msg;
+          var el = $("obError");
+          if (el) { el.textContent = msg; el.style.display = ""; }
+        }
+        var name = obName.trim();
+        if (!name) { fail("先填一下你要考什么试。"); return; }
+        var dateStr = obDate;
+        if (dateStr) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { fail("考试日期格式不对，再检查一下。"); return; }
+          var d = new Date(dateStr + "T00:00:00Z");
+          if (isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== dateStr) { fail("这个日期不存在，再检查一下。"); return; }
+        }
+        var t = obScore.trim();
+        if (!t) { fail("先填一下目标分数。"); return; }
+        var n = Number(t);
+        if (!isFinite(n) || n <= 0) { fail("目标分数填数字，如：500。"); return; }
+        obError = "";
+        store.profile = { examName: name, examDate: dateStr, targetScore: n, prepStartDate: TODAY };
+        saveStore();
+        showHome();
+      }
+
+      /* ===== Render: study ===== */
+      function srcLabels() {
+        var col = activeCollection();
+        var allLabel = col ? "全部" + col.label : "全部";
+        var allCount = col ? WORDS.filter(function (x) { return col.groups.indexOf(x.group) !== -1; }).length : WORDS.length;
+        var curLabel = group === "all" ? allLabel : groupLabel(group);
+        var curCount = group === "all" ? allCount : WORDS.filter(function (x) { return x.group === group; }).length;
+        return { allLabel: allLabel, allCount: allCount, curLabel: curLabel, curCount: curCount };
+      }
+      function renderStudy() {
+        var c = counts();
+        var col = activeCollection();
+        var sl = srcLabels();
+        var html = "";
+        html += '<div class="view-study-pad view-enter">';
+        html += '<header class="top"><h1>Muggle Word Cards</h1><p>试用版 · 20 个示例词，来自六级真题与阅读原文。点卡片翻开，先看例句和记忆钩，再看意思。</p></header>';
+        html += '<section class="progress-block" aria-label="学习进度"><div class="progress-nums">' +
+          "<span>共 <b>20</b> 词</span>" +
+          '<span class="know">认识 <b>' + c.know + "</b></span>" +
+          '<span class="unknow">不认识 <b>' + c.unknow + "</b></span>" +
+          "<span>未标记 <b>" + (20 - c.marked) + "</b></span>" +
+          '<span class="due">今日到期 <b>' + c.due + "</b></span></div>" +
+          '<div class="bar" aria-hidden="true"><div class="seg-know" style="width:' + (c.know / 20 * 100) + '%"></div><div class="seg-unknow" style="width:' + (c.unknow / 20 * 100) + '%"></div></div></section>';
+        html += '<div class="mode-switch" role="tablist" aria-label="学习模式">' +
+          '<button type="button" data-mode="cards" class="' + (mode === "cards" ? "active" : "") + '">翻卡背词</button>' +
+          '<button type="button" data-mode="quiz" class="' + (mode === "quiz" ? "active" : "") + '">自测挑战</button></div>';
+        html += '<div class="collections" role="group" aria-label="词集合">';
+        html += '<button type="button" class="col-tile' + (collection === "all" ? " active" : "") + '" data-col="all" aria-pressed="' + (collection === "all") + '"><span class="col-name">全部词</span><span class="col-meta">20 词 · ' + visibleGroups().length + " 个来源</span></button>";
+        COLLECTIONS.forEach(function (cc) {
+          var cnt = WORDS.filter(function (x) { return cc.groups.indexOf(x.group) !== -1; }).length;
+          var srcCnt = cc.groups.filter(function (g) { return WORDS.some(function (w) { return w.group === g; }); }).length;
+          html += '<button type="button" class="col-tile' + (collection === cc.key ? " active" : "") + '" data-col="' + esc(cc.key) + '" aria-pressed="' + (collection === cc.key) + '"><span class="col-name">' + esc(cc.label) + '</span><span class="col-meta">' + cnt + " 词 · " + srcCnt + " 个来源</span></button>";
+        });
+        html += "</div>";
+        if (col) {
+          var colCnt = WORDS.filter(function (x) { return col.groups.indexOf(x.group) !== -1; }).length;
+          html += '<p class="col-caption">「' + esc(col.label) + "」集合 · 共 " + colCnt + " 词 — 选单篇，只看那一篇。</p>";
+        }
+        html += '<div class="src-select" id="srcSelect"><button type="button" class="src-trigger" id="srcTrigger" aria-haspopup="listbox" aria-expanded="' + srcOpen + '" aria-label="选择来源，当前：' + esc(sl.curLabel) + "，共 " + sl.curCount + ' 词">' +
+          '<span class="src-trigger-label">' + esc(sl.curLabel) + '</span><span class="src-trigger-cnt">· ' + sl.curCount + "</span>" +
+          '<svg class="chev' + (srcOpen ? " open" : "") + '" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5.5 9.5 6.5 6.5 6.5-6.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
+        if (srcOpen) {
+          html += '<div class="src-menu" role="listbox" aria-label="单词来源">';
+          html += '<button type="button" role="option" aria-selected="' + (group === "all") + '" class="src-opt' + (group === "all" ? " selected" : "") + '" data-group="all"><span>' + esc(sl.allLabel) + '</span><span class="cnt">' + sl.allCount + "</span></button>";
+          visibleGroups().forEach(function (g) {
+            var cnt = WORDS.filter(function (x) { return x.group === g.key; }).length;
+            html += '<button type="button" role="option" aria-selected="' + (group === g.key) + '" class="src-opt' + (group === g.key ? " selected" : "") + '" data-group="' + esc(g.key) + '"><span>' + esc(g.label) + '</span><span class="cnt">' + cnt + "</span></button>";
+          });
+          html += "</div>";
+        }
+        html += "</div>";
+        html += '<div class="view-enter-soft" id="studyBody"></div>';
+        html += "</div>";
+        $("app").innerHTML = html;
+        $("backBtn").className = "back-glass show";
+        var modeBtns = $("app").querySelectorAll("[data-mode]");
+        for (var i = 0; i < modeBtns.length; i++) modeBtns[i].addEventListener("click", function () { setMode(this.getAttribute("data-mode")); });
+        var colBtns = $("app").querySelectorAll("[data-col]");
+        for (var j = 0; j < colBtns.length; j++) colBtns[j].addEventListener("click", function () { pickCollection(this.getAttribute("data-col")); });
+        $("srcTrigger").addEventListener("click", function () { srcOpen = !srcOpen; renderStudy(); });
+        var grpBtns = $("app").querySelectorAll("[data-group]");
+        for (var k = 0; k < grpBtns.length; k++) grpBtns[k].addEventListener("click", function () { pickGroup(this.getAttribute("data-group")); });
+        var sel = $("srcSelect");
+        sel.addEventListener("keydown", function (e) { if (e.key === "Escape") { srcOpen = false; renderStudy(); } });
+        renderStudyBody();
+      }
+
+      function statusSpan(item) {
+        if (deckKind === "review") return '<span class="card-status due">待复习</span>';
+        var m = markOf(item.word);
+        if (m === "know") return '<span class="card-status know">✓ 认识</span>';
+        if (m === "unknow") return '<span class="card-status unknow">✕ 不认识</span>';
+        return '<span class="card-status"></span>';
+      }
+
+      function renderStudyBody() {
+        var body = $("studyBody");
+        if (!body) return;
+        // Keep the study header/progress/collections in sync after any mark.
+        if (view === "study") {
+          var c = counts();
+          var nums = document.querySelector(".progress-nums");
+          if (nums) {
+            nums.innerHTML = "<span>共 <b>20</b> 词</span>" + '<span class="know">认识 <b>' + c.know + "</b></span>" + '<span class="unknow">不认识 <b>' + c.unknow + "</b></span>" + "<span>未标记 <b>" + (20 - c.marked) + "</b></span>" + '<span class="due">今日到期 <b>' + c.due + "</b></span>";
+            var bar = document.querySelector(".bar");
+            if (bar) bar.innerHTML = '<div class="seg-know" style="width:' + (c.know / 20 * 100) + '%"></div><div class="seg-unknow" style="width:' + (c.unknow / 20 * 100) + '%"></div>';
+          }
+        }
+        var html = "";
+        if (mode === "quiz") {
+          html += renderQuiz();
+          body.innerHTML = html;
+          bindQuiz();
+          return;
+        }
+        /* banners */
+        if (screen) {
+          var markedCount = screen.deckWords.filter(function (w) { return screen.passMarks[w]; }).length;
+          html += '<div class="screen-banner" role="status"><div class="sb-title">今晚筛选 · 第 ' + screen.pass + ' 遍<span class="pass-dots" aria-hidden="true">';
+          for (var pi = 1; pi <= 3; pi++) html += '<i class="' + (pi < screen.pass ? "done" : pi === screen.pass ? "cur" : "") + '"></i>';
+          html += '</span></div><div class="sb-sub">' +
+            (screen.pass === 1 ? "先完整过一遍：认识的标 ✓，不认识的标 ✕。" : "已打乱顺序，只刷上一遍没过的词——破除顺序记忆，还认得出才算真认识。") +
+            "本遍已标 " + markedCount + " / " + screen.deckWords.length + '。</div>' +
+            '<button class="sb-btn" type="button" id="btnFinishPass">' + (screen.pass >= 3 ? "结束筛选，排入复习计划 →" : markedCount >= screen.deckWords.length ? "这一遍过完了 →" : "提前结束这一遍 →") + '</button>' +
+            '<button class="sb-btn ghost" type="button" id="btnExitScreen">先不筛了</button></div>';
+        } else if (deckKind === "review") {
+          html += '<div class="screen-banner" role="status"><div class="sb-title">今日复习 · 还剩 ' + reviewList.length + ' 词</div><div class="sb-sub">按艾宾浩斯排期到期的词。答对往后推一档（1→2→4→7→15→30 天），答错明天再来，连错两次上通缉名单。</div><button class="sb-btn ghost" type="button" id="btnExitReview">退出复习</button></div>';
+        } else {
+          if (screenSummary) {
+            html += '<div class="screen-done" role="status"><div class="sd-title">今晚筛选完成，已排入复习计划 ✓</div><div class="sd-line">一遍过关 <b>' + screenSummary.clean + "</b> 词 · 4 天后首考；后两遍救回 <b>" + screenSummary.recovered + "</b> 词 · 2 天后首考；三遍仍不认识 <b>" + screenSummary.failedWords.length + "</b> 词 · 明天回来重点攻克" +
+              (screenSummary.failedWords.length > 0 ? "（" + esc(screenSummary.failedWords.join("、")) + "）" : "") + '。</div><button class="sb-btn ghost" type="button" style="margin-top:10px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);font:inherit;font-size:14.5px;font-weight:600;padding:10px 20px;border-radius:11px;cursor:pointer" id="btnDismissSummary">知道了</button></div>';
+          }
+          var uns = unscheduledInScope();
+          if (uns.length > 0) {
+            var scopeLabel = group !== "all" ? "本组" : collection !== "all" ? "「" + activeCollection().label + "」集合" : "全部";
+            html += '<div class="screen-banner" role="status"><div class="sb-title">今晚新词筛选 · ' + scopeLabel + " " + uns.length + ' 词还没排期</div><div class="sb-sub">过一遍标认识 / 不认识，再打乱刷两遍；三遍还不认识的进复习名单，三遍全过的从 4 天长间隔起步。</div><button class="sb-btn" type="button" id="btnStartScreen">开始筛选 →</button></div>';
+          }
+        }
+        var d = deck();
+        var idx = deckIdx(d);
+        var item = d[idx];
+        if (d.length === 0) {
+          if (deckKind === "review") {
+            html += '<div class="empty-note">今日复习全部完成 ✓<br />到期的词都按曲线推到下一档了，明天见。<div><button class="restart-btn" type="button" style="margin-top:18px" id="btnEmptyReview">← 回到全部单词</button></div></div>';
+          } else if (onlyUnknow) {
+            html += '<div class="empty-note">这个分组里还没有标为「不认识」的词。<br />先把不认识的词标出来，再回来集中攻克。<div><button class="restart-btn" type="button" style="margin-top:18px" id="btnEmptyUnknow">← 回到全部单词</button></div></div>';
+          } else {
+            html += '<div class="empty-note">这个分组暂时没有词。</div>';
+          }
+          body.innerHTML = html;
+          bindBanners();
+          return;
+        }
+        if (!item) { body.innerHTML = html; bindBanners(); return; }
+        if (!curWord || !d.some(function (x) { return x.word === curWord; })) { curWord = item.word; }
+        var p = store.progress[item.word];
+        var dueToday = isDue(item.word);
+        html += '<div class="card-scene" id="cardScene"><div class="card' + (flipped ? " flipped" : "") + '" id="cardEl" role="button" tabindex="0" aria-label="点击翻卡">';
+        /* front */
+        html += '<div class="card-face front"><span class="card-tag">' + esc(groupTag(item.group)) + "</span>" + statusSpan(item) +
+          '<div class="word' + (item.word.length > 14 ? " small" : "") + '">' + esc(item.word) + "</div>" +
+          (item.phon ? '<div class="phonetic">/' + esc(item.phon) + "/</div>" : "") +
+          '<div class="tap-hint">点卡片：先看例句猜意思</div>';
+        if (dueToday && deckKind !== "review") html += '<div class="due-hint">今日到期复习</div>';
+        if (!dueToday && p && p.dueOn && deckKind !== "review") {
+          html += '<div class="due-hint" style="color:var(--ink-faint)">下次复习 ' + esc(p.dueOn.slice(5).replace("-", "/")) + (p.stage != null ? " · 间隔 " + LADDER[p.stage] + " 天" : "") + "</div>";
+        }
+        html += "</div>";
+        /* back */
+        html += '<div class="card-face back" id="backFace"><span class="card-tag">' + esc(groupTag(item.group)) + "</span>" + statusSpan(item) +
+          '<div class="back-word">' + esc(item.word) + "</div>" +
+          (item.phon ? '<div class="back-phonetic">/' + esc(item.phon) + "/</div>" : "") +
+          '<div class="phrase-label">原文 / 例句</div><div class="phrase">' + esc(item.example) + "</div>" +
+          '<div class="phrase-label">记忆钩子</div><div class="hook">' + esc(item.hook) + "</div>" +
+          (item.trap ? '<div class="phrase-label" style="margin-top:12px">易错提醒</div><div class="draft-trap" style="max-width:92%;margin-top:0">' + esc(item.trap) + "</div>" : "") +
+          '<div class="meaning-block">';
+        if (meaningShown) {
+          html += '<div class="phrase-label">中文释义</div><div class="meaning">' + esc(item.meaning) + "</div>";
+        } else {
+          html += '<div class="meaning-hidden">先在心里猜一下意思 · 点一下看释义</div>';
+        }
+        html += "</div></div>";
+        html += '<div class="card-scroll-track" id="backTrack" aria-hidden="true"></div>';
+        html += "</div></div>";
+        /* nav */
+        html += '<div class="nav-row"><button class="nav-btn" type="button" id="btnPrev" aria-label="上一张"' + (idx <= 0 ? " disabled" : "") + '>← 上一张</button><span class="pos">第 ' + (idx + 1) + " / " + d.length + ' 张</span><button class="nav-btn" type="button" id="btnNext" aria-label="下一张"' + (idx >= d.length - 1 ? " disabled" : "") + ">下一张 →</button></div>";
+        /* marks */
+        html += '<div class="mark-row"><button class="mark-btn unknow" type="button" id="btnUnknow">✕ 不认识</button><button class="mark-btn know" type="button" id="btnKnow">✓ 认识</button></div>';
+        /* tools */
+        if (!screen && deckKind !== "review") {
+          var cc = counts();
+          if (confirmClear) {
+            html += '<div class="clear-confirm" role="alertdialog" aria-labelledby="clearTitle" aria-describedby="clearDesc"><div class="clear-confirm-title" id="clearTitle">⚠ 警告：这会清掉你的全部标记！</div><p class="clear-confirm-text" id="clearDesc">将清除全部 <b>' + cc.marked + "</b> 个标记（认识 " + cc.know + " · 不认识 " + cc.unknow + "），所有词都会变回「未标记」，认识 / 不认识计数和进度条都会归零。别慌：清除前系统会自动留一份存档，之后可以在下方点「恢复被清除的标记」把它们找回来。现在请确认你真的要清除。</p>" +
+              '<div class="clear-confirm-actions"><button class="clear-cancel-btn" type="button" id="btnClearCancel">取消，保留标记</button><button class="clear-danger-btn" type="button" id="btnClearConfirm">确认清除全部标记</button></div></div>';
+          }
+          html += '<div class="tool-row"><button class="tool-btn" type="button" id="btnShuffle"' + (shuffling ? " disabled" : "") + ">" + (shuffling ? "🃏 洗牌中…" : "🔀 打乱顺序") + '</button>' +
+            '<button class="tool-btn' + (onlyUnknow ? " on" : "") + '" type="button" id="btnOnlyUnknow">只看不认识的</button>' +
+            '<button class="tool-btn danger" type="button" id="btnClear"' + (cc.marked === 0 || confirmClear ? " disabled" : "") + '>清除标记</button></div>';
+          var csc = clearedScheduledCount();
+          if (store.backup !== null || csc > 0) {
+            html += '<div class="restore-row"><p class="restore-text">' +
+              (store.backup !== null ? "手滑清掉了？清除前留了一份存档（" + store.backup.count + " 个标记），可以一键恢复。" : "检测到 " + csc + " 个词的标记被清除、复习排期还在，可以按排期把标记恢复回来。") +
+              '</p><button class="tool-btn restore" type="button" id="btnRestore">↩ 恢复被清除的标记</button>' +
+              (restoreNote ? '<p class="restore-note" role="status">' + esc(restoreNote) + "</p>" : "") + "</div>";
+          }
+        }
+        body.innerHTML = html;
+        bindBanners();
+        bindCard(item);
+        syncBackBar();
+      }
+
+      function bindBanners() {
+        var bs = $("btnStartScreen"); if (bs) bs.addEventListener("click", startScreening);
+        var bf = $("btnFinishPass"); if (bf) bf.addEventListener("click", finishPass);
+        var be = $("btnExitScreen"); if (be) be.addEventListener("click", exitScreening);
+        var br = $("btnExitReview"); if (br) br.addEventListener("click", function () { exitReview(); render(); });
+        var bd = $("btnDismissSummary"); if (bd) bd.addEventListener("click", function () { screenSummary = null; renderStudyBody(); });
+        var er = $("btnEmptyReview"); if (er) er.addEventListener("click", function () { exitReview(); render(); });
+        var eu = $("btnEmptyUnknow"); if (eu) eu.addEventListener("click", function () { onlyUnknow = false; curWord = null; render(); });
+      }
+      function bindCard(item) {
+        var cardEl = $("cardEl");
+        if (cardEl) {
+          cardEl.addEventListener("click", function () {
+            // Clicking the flipped card's scrollable back shouldn't flip on scroll-drag;
+            // a plain click follows the main version's tap cycle.
+            tapCard();
+          });
+          cardEl.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tapCard(); }
+          });
+          cardEl.addEventListener("touchstart", function (e) { touchX = e.changedTouches[0] ? e.changedTouches[0].clientX : null; }, { passive: true });
+          cardEl.addEventListener("touchend", function (e) {
+            if (touchX === null) return;
+            var endX = e.changedTouches[0] ? e.changedTouches[0].clientX : touchX;
+            var dx = endX - touchX; touchX = null;
+            if (Math.abs(dx) > 60) softGo(dx < 0 ? 1 : -1);
+          }, { passive: true });
+        }
+        var backFace = $("backFace");
+        if (backFace) backFace.addEventListener("scroll", syncBackBar);
+        var bp = $("btnPrev"); if (bp) bp.addEventListener("click", function () { softGo(-1); });
+        var bn = $("btnNext"); if (bn) bn.addEventListener("click", function () { softGo(1); });
+        var bk = $("btnKnow"); if (bk) bk.addEventListener("click", function () { applyMark("know"); });
+        var bu = $("btnUnknow"); if (bu) bu.addEventListener("click", function () { applyMark("unknow"); });
+        var bsh = $("btnShuffle"); if (bsh) bsh.addEventListener("click", doShuffle);
+        var bou = $("btnOnlyUnknow"); if (bou) bou.addEventListener("click", function () { onlyUnknow = !onlyUnknow; curWord = null; confirmClear = false; render(); });
+        var bc = $("btnClear"); if (bc) bc.addEventListener("click", function () { confirmClear = true; renderStudyBody(); var cancel = $("btnClearCancel"); if (cancel) cancel.focus(); });
+        var bcc = $("btnClearCancel"); if (bcc) bcc.addEventListener("click", function () { confirmClear = false; renderStudyBody(); });
+        var bcf = $("btnClearConfirm"); if (bcf) bcf.addEventListener("click", clearAllMarks);
+        var brs = $("btnRestore"); if (brs) brs.addEventListener("click", restoreMarks);
+      }
+
+      /* ===== Quiz rendering ===== */
+      function renderQuiz() {
+        var html = '<div class="quiz-box">';
+        if (!quiz || quiz.order.length === 0) {
+          html += '<div class="quiz-done"><div class="big">0 / 0</div><p>这个分组暂时没有词。</p></div>';
+        } else if (quiz.i >= quiz.order.length) {
+          var total = quiz.order.length;
+          html += '<div class="quiz-done"><div class="big">' + quiz.correct + " / " + total + "</div><p>" +
+            (quiz.correct === total ? "全对，漂亮！这组词已经拿下了。" : quiz.correct / total >= 0.7 ? "不错，错的几个词回翻卡区再看一眼原文例句。" : "别急，把错词在翻卡里标成「不认识」，集中再过一遍。") +
+            '</p><button class="restart-btn" type="button" id="btnQuizRestart">再测一轮</button></div>';
+        } else {
+          var cur = quiz.order[quiz.i];
+          html += '<div class="quiz-head"><span>第 ' + (quiz.i + 1) + " / " + quiz.order.length + ' 题</span><span class="score">得分 <b>' + quiz.correct + "</b> · 已答 " + quiz.answered + "</span></div>";
+          html += '<div class="quiz-meaning">' + esc(cur.meaning) + '</div><div class="quiz-phrase">' + esc(blankedPhrase(cur)) + '</div><div class="options">';
+          quiz.options.forEach(function (o) {
+            var cls = "";
+            if (quiz.locked && o.word === cur.word) cls = " right";
+            else if (quiz.locked && quiz.picked === o.word) cls = " wrong";
+            html += '<button class="opt' + cls + '" type="button" data-opt="' + esc(o.word) + '"' + (quiz.locked ? " disabled" : "") + ">" + esc(o.word) +
+              (o.phon ? '<span class="opt-phon">/' + esc(o.phon) + "/</span>" : "") + "</button>";
+          });
+          html += "</div>";
+          var fbCls = quiz.locked ? (quiz.picked === cur.word ? " good" : " bad") : "";
+          var fb = "";
+          if (quiz.locked) {
+            fb = quiz.picked === cur.word ? "✓ 答对了！ " + cur.hook : "✕ 正确答案是 " + cur.word + (cur.phon ? " /" + cur.phon + "/" : "") + " —— " + cur.hook;
+          }
+          html += '<div class="quiz-feedback' + fbCls + '">' + esc(fb) + "</div>";
+          html += '<button class="quiz-next' + (quiz.locked ? " show" : "") + '" type="button" id="btnQuizNext">' + (quiz.i >= quiz.order.length - 1 ? "看结果 →" : "下一题 →") + "</button>";
+        }
+        html += "</div>";
+        return html;
+      }
+      function bindQuiz() {
+        var opts = document.querySelectorAll("[data-opt]");
+        for (var i = 0; i < opts.length; i++) opts[i].addEventListener("click", function () { answerQuiz(this.getAttribute("data-opt")); });
+        var bn = $("btnQuizNext"); if (bn) bn.addEventListener("click", nextQuiz);
+        var br = $("btnQuizRestart"); if (br) br.addEventListener("click", function () { startQuiz(); renderStudyBody(); });
+      }
+
+      /* ===== Photo extract: upload -> draft -> import (trial backend) ===== */
+      function startExTimer() {
+        stopExTimer();
+        exStartedAt = Date.now();
+        exElapsedTimer = setInterval(function () {
+          var el = $("exElapsed");
+          if (el) el.textContent = String(Math.floor((Date.now() - exStartedAt) / 1000));
+        }, 500);
+      }
+      function stopExTimer() {
+        if (exElapsedTimer) { clearInterval(exElapsedTimer); exElapsedTimer = null; }
+      }
+      function fetchWithTimeout(url, options, timeoutMs) {
+        var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+        var timer = null;
+        if (controller) {
+          options.signal = controller.signal;
+          timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+        }
+        return fetch(url, options).then(function (r) {
+          if (timer) clearTimeout(timer);
+          return r;
+        }, function (e) {
+          if (timer) clearTimeout(timer);
+          throw e;
+        });
+      }
+      function readServerError(resp) {
+        return resp.json().then(function (d) {
+          if (d && typeof d.detail === "string" && d.detail) return d.detail;
+          return "";
+        }).catch(function () { return ""; });
+      }
+      function exFriendlyError(err, fallback) {
+        if (err && err.name === "AbortError") {
+          return "等了 120 秒服务器还没有回应——它可能还在唤醒，或者网络不太稳。稍等半分钟再试一次。";
+        }
+        if (err && err.message && /[一-鿿]/.test(err.message) && err.message.length < 200) return err.message;
+        return fallback;
+      }
+      function normalizeDraft(w) {
+        function cleanPhon(p) { return String(p || "").trim().replace(/^\/+|\/+$/g, "").trim(); }
+        return {
+          word: String((w && w.word) || "").trim(),
+          phonetic: cleanPhon(w && w.phonetic),
+          meaning: String((w && w.meaning) || "").trim(),
+          phrase: String((w && w.phrase) || "").trim(),
+          hook: String((w && w.hook) || "").trim(),
+          trap: String((w && w.trap) || "").trim()
+        };
+      }
+      function resetExtract() {
+        stopExTimer();
+        exFiles.forEach(function (x) { if (x.url && window.URL && URL.revokeObjectURL) URL.revokeObjectURL(x.url); });
+        exFiles = [];
+        exDraft = [];
+        exGroupLabel = "";
+        exError = "";
+        exResult = null;
+        exStage = "pick";
+      }
+      function onExFilesChosen(list) {
+        if (!list || list.length === 0) return;
+        exError = "";
+        var incoming = Array.prototype.slice.call(list);
+        for (var i = 0; i < incoming.length; i++) {
+          var f = incoming[i];
+          if (exFiles.length >= 3) { exError = "一次最多 3 张照片，多出来的先放着，下次再拍。"; break; }
+          if (!/^image\//.test(f.type || "")) { exError = "「" + f.name + "」不是图片，换一张照片试试。"; continue; }
+          if (f.size > 10 * 1024 * 1024) { exError = "「" + f.name + "」超过 10MB 了，换一张小一点的照片。"; continue; }
+          exFiles.push({ file: f, url: (window.URL && URL.createObjectURL) ? URL.createObjectURL(f) : "" });
+        }
+        renderExtract();
+      }
+      function removeExPhoto(idx) {
+        var x = exFiles[idx];
+        if (x && x.url && window.URL && URL.revokeObjectURL) URL.revokeObjectURL(x.url);
+        exFiles.splice(idx, 1);
+        exError = "";
+        renderExtract();
+      }
+      function compressImageFile(file) {
+        return new Promise(function (resolve) {
+          var url = (window.URL && URL.createObjectURL) ? URL.createObjectURL(file) : "";
+          if (!url) { resolve(file); return; }
+          var img = new Image();
+          img.onload = function () {
+            try {
+              var w = img.naturalWidth || img.width;
+              var h = img.naturalHeight || img.height;
+              if (!w || !h) { URL.revokeObjectURL(url); resolve(file); return; }
+              var scale = Math.min(1, 1600 / Math.max(w, h));
+              var cw = Math.max(1, Math.round(w * scale));
+              var ch = Math.max(1, Math.round(h * scale));
+              var canvas = document.createElement("canvas");
+              canvas.width = cw;
+              canvas.height = ch;
+              var ctx = canvas.getContext("2d");
+              if (!ctx) { URL.revokeObjectURL(url); resolve(file); return; }
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(0, 0, cw, ch);
+              ctx.drawImage(img, 0, 0, cw, ch);
+              URL.revokeObjectURL(url);
+              if (canvas.toBlob) {
+                canvas.toBlob(function (blob) {
+                  resolve(blob || file);
+                }, "image/jpeg", 0.85);
+              } else {
+                resolve(file);
+              }
+            } catch (e) {
+              try { URL.revokeObjectURL(url); } catch (e2) {}
+              resolve(file);
+            }
+          };
+          img.onerror = function () {
+            try { URL.revokeObjectURL(url); } catch (e) {}
+            resolve(file);
+          };
+          img.src = url;
+        });
+      }
+      function jpegName(name, idx) {
+        var base = String(name || "").replace(/\.[^.]*$/, "");
+        return (base || ("photo-" + (idx + 1))) + ".jpg";
+      }
+      function examCodeForExtract() {
+        var name = store.profile && store.profile.examName ? String(store.profile.examName) : "";
+        if (name.indexOf("六级") !== -1) return "cet6";
+        if (name.indexOf("四级") !== -1) return "cet4";
+        if (name.indexOf("考研") !== -1) return "kaoyan";
+        if (name.indexOf("雅思") !== -1) return "ielts";
+        if (name.indexOf("托福") !== -1) return "toefl";
+        return "cet6";
+      }
+      function startExtract() {
+        if (exFiles.length === 0) return;
+        exError = "";
+        exStage = "compressing";
+        renderExtract();
+        startExTimer();
+        var jobs = exFiles.map(function (x) { return compressImageFile(x.file); });
+        Promise.all(jobs).then(function (blobs) {
+          if (view !== "extract") { stopExTimer(); return; }
+          exStage = "extracting";
+          renderExtract();
+          var fd = new FormData();
+          fd.append("exam", examCodeForExtract());
+          blobs.forEach(function (blob, i) {
+            var orig = exFiles[i] ? exFiles[i].file : null;
+            if (blob && blob !== orig) fd.append("files", blob, jpegName(orig && orig.name, i));
+            else if (orig) fd.append("files", orig);
+          });
+          return fetchWithTimeout(API_BASE + "/api/extract", { method: "POST", body: fd }, 120000);
+        }).then(function (resp) {
+          if (!resp) return null;
+          if (!resp.ok) {
+            return readServerError(resp).then(function (m) {
+              throw new Error(m || ("服务器出错了（HTTP " + resp.status + "），稍等一下再试一次。"));
+            });
+          }
+          return resp.json();
+        }).then(function (data) {
+          stopExTimer();
+          if (view !== "extract") return;
+          var words = (data && data.words) || [];
+          exDraft = words.map(normalizeDraft).filter(function (w) { return w.word && w.meaning; });
+          exGroupLabel = (data && data.group_label) || "";
+          if (exDraft.length === 0) {
+            exStage = "pick";
+            exError = "这次没有提取到合适的词，换一张拍得更清楚的照片再试试。";
+          } else {
+            exStage = "draft";
+          }
+          renderExtract();
+        }).catch(function (err) {
+          stopExTimer();
+          if (view !== "extract") return;
+          exStage = "pick";
+          exError = exFriendlyError(err, "连不上试用服务器，检查一下网络再试；如果是服务器在睡觉，等半分钟再点一次。");
+          renderExtract();
+        });
+      }
+      function deleteDraft(idx) {
+        exDraft.splice(idx, 1);
+        exError = "";
+        renderExtract();
+      }
+      function confirmImport() {
+        var input = $("exGroupInput");
+        var label = input ? input.value.trim() : exGroupLabel;
+        if (exDraft.length === 0) return;
+        if (!label) {
+          exError = "先给这组词填一个分组名，再点确认导入。";
+          renderExtract();
+          return;
+        }
+        exGroupLabel = label;
+        exError = "";
+        exStage = "importing";
+        renderExtract();
+        startExTimer();
+        var payload = {
+          group_label: label,
+          source: "拍照提词（试用版）",
+          words: exDraft.map(function (w) {
+            return { word: w.word, phonetic: w.phonetic, meaning: w.meaning, phrase: w.phrase, hook: w.hook, trap: w.trap || "" };
+          })
+        };
+        fetchWithTimeout(API_BASE + "/api/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }, 120000).then(function (resp) {
+          if (!resp.ok) {
+            return readServerError(resp).then(function (m) {
+              throw new Error(m || ("保存失败（HTTP " + resp.status + "），稍等一下再试一次。"));
+            });
+          }
+          return resp.json();
+        }).then(function (data) {
+          stopExTimer();
+          if (view !== "extract") return;
+          exResult = {
+            groupLabel: label,
+            imported: (data && typeof data.imported === "number") ? data.imported : exDraft.length,
+            skipped: (data && data.skipped) || []
+          };
+          exStage = "done";
+          renderExtract();
+        }).catch(function (err) {
+          stopExTimer();
+          if (view !== "extract") return;
+          exStage = "draft";
+          exError = exFriendlyError(err, "保存没成功，词还都在这页，检查一下网络再点一次确认导入。");
+          renderExtract();
+        });
+      }
+
+      /* ===== Render: photo extract ===== */
+      function renderExtract() {
+        var html = "";
+        html += '<div class="view-study-pad view-enter">';
+        html += '<header class="top"><h1>拍照提词</h1><p>拍下英文文章照片，AI 挑出值得背的生词，做成一组新卡片。</p></header>';
+        html += '<p class="server-note">试用服务器上的数据是演示用的，服务重启会清空；想长期保存请用主版本。</p>';
+        if (exError && exStage !== "compressing" && exStage !== "extracting" && exStage !== "importing") {
+          html += '<div class="extract-error" role="alert">' + esc(exError) + "</div>";
+        }
+        if (exStage === "pick") {
+          html += '<input type="file" id="exFileInput" accept="image/*" multiple hidden />';
+          if (exFiles.length === 0) {
+            html += '<button type="button" class="photo-drop" id="exDrop"><div class="pd-title">点这里选照片</div><div class="pd-sub">一次 1–3 张 · 拍英文文章、试卷阅读都行<br />照片拍清楚一点，提取更准</div></button>';
+          } else {
+            html += '<div class="photo-thumbs">';
+            exFiles.forEach(function (x, i) {
+              html += '<div class="photo-thumb">' +
+                (x.url ? '<img src="' + x.url + '" alt="已选照片 ' + (i + 1) + '" />' : "") +
+                '<div class="pt-name">' + esc(x.file.name || ("照片 " + (i + 1))) + "</div>" +
+                '<button type="button" class="pt-rm" data-rmphoto="' + i + '" aria-label="移除这张照片">×</button></div>';
+            });
+            if (exFiles.length < 3) html += '<button type="button" class="photo-add" id="exAdd">＋ 再加一张<br />（' + exFiles.length + " / 3）</button>";
+            html += "</div>";
+          }
+          html += '<button class="cta-btn" type="button" id="exStartBtn"' + (exFiles.length === 0 ? " disabled" : "") + ">" +
+            (exFiles.length === 0 ? "先选一张照片" : "开始提取 · " + exFiles.length + " 张照片 →") + "</button>";
+          if (exFiles.length > 0) html += '<div class="extract-actions"><button class="tool-btn" type="button" id="exClearBtn">清空重选</button></div>';
+          html += '<p class="server-note">服务器是免费版，闲置 15 分钟会休眠：第一次提取可能要等 30–60 秒唤醒，之后就快了。</p>';
+        } else if (exStage === "compressing") {
+          html += '<div class="extract-status" role="status"><div class="wake-spinner" aria-hidden="true"></div>' +
+            '<div class="es-title">正在压缩上传…</div>' +
+            '<p class="es-sub">先把照片压小再传，服务器识别起来快得多。<br />已等 <span id="exElapsed">0</span> 秒，别关这个页面。</p></div>';
+        } else if (exStage === "extracting") {
+          html += '<div class="extract-status" role="status"><div class="wake-spinner" aria-hidden="true"></div>' +
+            '<div class="es-title">正在识别提取…</div>' +
+            '<p class="es-sub">免费服务器闲置后会休眠，唤醒加上识别照片、AI 提词，一共大概 30–60 秒。<br />已等 <span id="exElapsed">0</span> 秒，别关这个页面。</p></div>';
+        } else if (exStage === "draft") {
+          html += '<h2 class="home-h"><span class="dot">●</span>提取好了 · 共 ' + exDraft.length + ' 词<span class="home-h-en">DRAFT</span></h2>';
+          html += '<p class="server-note">不要的词点「删除」，剩下的确认后会存成一个新分组。</p>';
+          html += '<div class="phrase-label">分组名</div>';
+          html += '<input class="group-input" id="exGroupInput" type="text" value="' + esc(exGroupLabel) + '" placeholder="给这组词起个名字" />';
+          if (exDraft.length === 0) {
+            html += '<div class="empty-note">词都删完了，没有可保存的了。<br />点下面重新拍一组。</div>';
+          } else {
+            html += '<div class="draft-list">';
+            exDraft.forEach(function (w, i) {
+              html += '<div class="draft-item"><div class="draft-top"><span class="draft-word">' + esc(w.word) + "</span>" +
+                (w.phonetic ? '<span class="w-phon">/' + esc(w.phonetic) + "/</span>" : "") +
+                '<button type="button" class="draft-del" data-del="' + i + '">删除</button></div>' +
+                '<div class="draft-meaning">' + esc(w.meaning) + "</div>" +
+                (w.phrase ? '<div class="phrase-label">原文例句</div><div class="draft-phrase">' + esc(w.phrase) + "</div>" : "") +
+                (w.hook ? '<div class="hook draft-hook">' + esc(w.hook) + "</div>" : "") +
+                (w.trap ? '<div class="draft-trap">易错：' + esc(w.trap) + "</div>" : "") +
+                "</div>";
+            });
+            html += "</div>";
+            html += '<button class="cta-btn" type="button" id="exImportBtn">确认导入 · 存成新分组（' + exDraft.length + " 词）→</button>";
+          }
+          html += '<div class="extract-actions"><button class="tool-btn" type="button" id="exRestartBtn">放弃这组，重新拍</button></div>';
+        } else if (exStage === "importing") {
+          html += '<div class="extract-status" role="status"><div class="wake-spinner" aria-hidden="true"></div>' +
+            '<div class="es-title">正在保存这组词</div>' +
+            '<p class="es-sub">正在把 ' + exDraft.length + ' 个词存到试用服务器的分组「' + esc(exGroupLabel) + "」里。<br />已等 <span id=\"exElapsed\">0</span> 秒，别关这个页面。</p></div>";
+        } else if (exStage === "done" && exResult) {
+          html += '<div class="screen-done" role="status"><div class="sd-title">导入成功 ✓</div>' +
+            '<div class="sd-line">已保存到分组「<b>' + esc(exResult.groupLabel) + "</b>」，成功导入 <b>" + exResult.imported + "</b> 个词。</div>" +
+            (exResult.skipped.length > 0 ? '<div class="sd-line">另有 ' + exResult.skipped.length + " 个词服务器上已经有了，自动跳过：" + esc(exResult.skipped.join("、")) + "。</div>" : "") +
+            '<div class="sd-line">这组词存在试用服务器的词库里，这台设备上的 20 个示例词和本地进度不受影响。</div></div>';
+          html += '<button class="cta-btn" type="button" id="exAgainBtn">再拍一组 →</button>';
+          html += '<div class="extract-actions"><button class="tool-btn" type="button" id="exHomeBtn">回首页</button></div>';
+        }
+        html += "</div>";
+        $("app").innerHTML = html;
+        $("backBtn").className = "back-glass show";
+        var fi = $("exFileInput");
+        if (fi) fi.addEventListener("change", function () { onExFilesChosen(fi.files); });
+        var drop = $("exDrop"); if (drop && fi) drop.addEventListener("click", function () { fi.click(); });
+        var add = $("exAdd"); if (add && fi) add.addEventListener("click", function () { fi.click(); });
+        var sb = $("exStartBtn"); if (sb) sb.addEventListener("click", startExtract);
+        var cb = $("exClearBtn"); if (cb) cb.addEventListener("click", function () { resetExtract(); renderExtract(); });
+        var rms = $("app").querySelectorAll("[data-rmphoto]");
+        for (var a = 0; a < rms.length; a++) rms[a].addEventListener("click", function () { removeExPhoto(parseInt(this.getAttribute("data-rmphoto"), 10)); });
+        var dels = $("app").querySelectorAll("[data-del]");
+        for (var b = 0; b < dels.length; b++) dels[b].addEventListener("click", function () { deleteDraft(parseInt(this.getAttribute("data-del"), 10)); });
+        var ib = $("exImportBtn"); if (ib) ib.addEventListener("click", confirmImport);
+        var rb = $("exRestartBtn"); if (rb) rb.addEventListener("click", function () { resetExtract(); renderExtract(); });
+        var ab = $("exAgainBtn"); if (ab) ab.addEventListener("click", function () { resetExtract(); renderExtract(); });
+        var hb = $("exHomeBtn"); if (hb) hb.addEventListener("click", showHome);
+      }
+
+      /* ===== Top-level render ===== */
+      function render() {
+        if (view === "onboarding") renderOnboarding();
+        else if (view === "home") renderHome();
+        else if (view === "extract") renderExtract();
+        else renderStudy();
+      }
+
+      /* ===== Global events ===== */
+      $("backBtn").addEventListener("click", showHome);
+      document.addEventListener("pointerdown", function (e) {
+        if (!srcOpen) return;
+        var sel = $("srcSelect");
+        if (sel && !sel.contains(e.target)) { srcOpen = false; if (view === "study") renderStudy(); }
+      });
+      document.addEventListener("keydown", function (e) {
+        if (view !== "study" || mode !== "cards") return;
+        if (e.key === "ArrowRight") { var bn = $("btnNext"); if (bn && !bn.disabled) softGo(1); }
+        if (e.key === "ArrowLeft") { var bp = $("btnPrev"); if (bp && !bp.disabled) softGo(-1); }
+      });
+      window.addEventListener("resize", syncBackBar);
+
+      /* ===== Init ===== */
+      // Fan starts on the same cover word style as the main version when present.
+      (function initFan() {
+        var mi = -1;
+        WORDS.forEach(function (w, i) { if (w.word === "mindset") mi = i; });
+        if (mi >= 0) fanCenter = mi;
+      })();
+      renderSplash();
+      splashTimers = [
+        setTimeout(function () { splashLeaving = true; renderSplash(); }, 3300),
+        setTimeout(function () { splashGone = true; renderSplash(); }, 3780)
+      ];
+      render();
+    </script>
+  </body>
+</html>
